@@ -1203,25 +1203,30 @@ class FormularioOperacion:
         p.text("----------------------------------\n")
         respuesta = self.operacion1.total_pensionados_corte(Numcorte)
 
-        p.text("Cantidad e Importes Pensiones"+'\n')
-        p.text("Cuantos - Concepto - ImporteTotal "+'\n')
-        for fila in respuesta:
-            p.text(f"   {str(fila[0])}   -   {str(fila[1])}   -   ${str(fila[2])}\n")
-
-            # p.text('   ')
-            # p.text(str(fila[0]))
-            # p.text('   -  ')
-            # p.text(str(fila[1]))
-            # p.text(' -  $')
-            # #p.text('valor c/u $')
-            # p.text(str(fila[2]))
-            # p.text('\n')
-
-        else:
-            p.text("----------------------------------\n")
+        if int(respuesta[0][0]) == 0:
             p.cut()
             self.Cerrar_Programa()
-###################################
+
+        else:
+            p.text("Cantidad e Importes Pensiones"+'\n')
+            p.text("Cuantos - Concepto - ImporteTotal "+'\n')
+            for fila in respuesta:
+                p.text(f"   {str(fila[0])}   -  {str(fila[1])}   -   ${str(fila[2])}\n")
+
+                # p.text('   ')
+                # p.text(str(fila[0]))
+                # p.text('   -  ')
+                # p.text(str(fila[1]))
+                # p.text(' -  $')
+                # #p.text('valor c/u $')
+                # p.text(str(fila[2]))
+                # p.text('\n')
+
+            else:
+                p.text("----------------------------------\n")
+                p.cut()
+                self.Cerrar_Programa()
+    ###################################
     def Cerrar_Programa(self):
         self.ventana1.destroy()
 
