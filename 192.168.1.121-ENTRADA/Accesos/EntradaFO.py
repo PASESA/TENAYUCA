@@ -203,27 +203,20 @@ class FormularioOperacion:
         self.MaxId.set(masuno)
         fechaEntro = datetime.today()
         horaentrada = str(fechaEntro)
-        horaentrada=horaentrada[:16]
-        self.labelhr.configure(text=(horaentrada, "Entró"))
+        horaentrada=horaentrada[:19]
+        self.labelhr.configure(text=(horaentrada[:-3], "Entró"))
         corteNum = 0
         placa=str(self.Placa.get(), )
         datos=(fechaEntro, corteNum, placa)
-        # hacer la foto de codigo qr
-        #img = qrcode.make("2 de septiembre")
+
         fSTR=str(fechaEntro)
-        imgqr=(fSTR + masuno)
-        #img = qrcode.make(fechaEntro)
-        img = qrcode.make(imgqr)
-        # Obtener imagen con el tamaño indicado
-        reducida = img.resize((100, 75))
-        # Mostrar imagen reducida.show()
-        # Guardar imagen obtenida con el formato JPEG
-        reducida.save("reducida.png")
-        f = open("reducida.png", "wb")
-        img.save(f)
-        f.close()
-        print("horaentrada",horaentrada)
-        #print("imgqr",imgqr)
+
+        folio_cifrado = self.operacion1.cifrar_folio(folio = masuno)
+
+		#Generar QR
+        self.operacion1.generar_QR(folio_cifrado)
+        
+
         page_width = 200
         page_height = 195
         self.canvas = canvas.Canvas("PdfGen.pdf", pagesize=(page_width, page_height))
@@ -246,7 +239,7 @@ class FormularioOperacion:
         self.fechasindeci=(fSTR[:19])
         self.canvas.setFont('Helvetica', 10)
         self.canvas.drawString(30,25,"Entro:")
-        self.canvas.drawString(65,25,horaentrada)
+        self.canvas.drawString(65,25,horaentrada[:-3])
         self.canvas.setFont('Helvetica', 8)
         self.canvas.drawString(30,15,"Folio:")
         self.canvas.drawString(75,15,masuno)
@@ -290,8 +283,23 @@ class FormularioOperacion:
                 VigAct=fila[0]
                 Estatus=fila[1]
                 Vigencia =fila[2]
-                Tolerancia=int(fila[3])
-                #print("Tolerancia: ",str(Tolerancia))
+                Tolerancia = fila[3]
+                Tolerancia = int(Tolerancia)
+
+                # Obtener la fecha y hora actual en formato deseado
+                VigAct = VigAct.strftime("%Y-%m-%d %H:%M:%S")
+                # Convertir la cadena de caracteres en un objeto datetime
+                VigAct = datetime.strptime(VigAct, "%Y-%m-%d %H:%M:%S")
+
+                # Obtener la fecha y hora actual en formato deseado
+                hoy = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+                # Convertir la cadena de caracteres en un objeto datetime
+                hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
+
+                limite = VigAct + timedelta(days=Tolerancia)
+
+                print(limite)
+
                 if Estatus == 'Adentro' :
                     self.labelMensaje.config(text= "Ya está Adentro")
                     #mb.showwarning("IMPORTANTE", "NO PUEDE ACCEDER: Ya existe un auto adentro registrado")
@@ -304,7 +312,9 @@ class FormularioOperacion:
                     self.NumTarjeta4.set("")               
                     self.entryNumTarjeta4.focus()
                     return False                        
-                elif VigAct <= datetime.today()+timedelta(days = Tolerancia):
+
+
+                elif hoy >= limite:
                     datos1=('Afuera','VENCIDA', Existe)
                     self.labelMensaje.config(text= "Vigencia VENCIDA")
                     self.operacion1.UpdPensionado(datos1)
