@@ -365,9 +365,9 @@ class FormularioOperacion:
 
                 # Calcular el importe basado en las horas y días de permanencia
                 if horas_dentro <= 24:
-                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 30))
+                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 20))
                 if horas_dentro > 24 or ffeecha.days >= 1:
-                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 30))
+                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 20))
 
             else:
                 importe = 200
@@ -654,12 +654,6 @@ class FormularioOperacion:
             p.text("BOLETO PERDIDO\n")
         EntradaCompro = str(self.descripcion.get(),)
         SalioCompro = str(self.copia.get(),)
-
-        imgqr = (EntradaCompro + SalioCompro)
-
-        self.operacion1.generar_QR(imgqr)
-        print(f"QR salida: {imgqr}")
-
 
         #Compro de comprobante
         p.set('left')

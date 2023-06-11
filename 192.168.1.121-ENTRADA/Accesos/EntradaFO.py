@@ -201,7 +201,10 @@ class FormularioOperacion:
         masuno = int(n1)+int(n2)
         masuno = str(masuno)
         self.MaxId.set(masuno)
+
         fechaEntro = datetime.today()
+        fechaEntro = fechaEntro - timedelta(minutes = 1, seconds = fechaEntro.second)
+
         horaentrada = str(fechaEntro)
         horaentrada=horaentrada[:19]
         self.labelhr.configure(text=(horaentrada[:-3], "Entró"))
@@ -263,6 +266,8 @@ class FormularioOperacion:
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$impresion fin$$$$$$$$$$$$$$$$        
         self.operacion1.altaRegistroRFID(datos)
         self.Placa.set('')
+
+
     def Pensionados(self,event):
         numtarjeta=str(self.entryNumTarjeta4.get(),)
         print(numtarjeta)

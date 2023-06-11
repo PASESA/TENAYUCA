@@ -666,6 +666,7 @@ class FormularioOperacion:
             print("pensionado")
         elif len(datos) > 19:#con esto revisamos si lee el folio o la promocion
             datos=datos[19:]
+            print(f"Folio: {datos}")
             #print(datos)
             #datos=int(datos)
             datos=str(datos)
@@ -776,7 +777,7 @@ class FormularioOperacion:
                     self.descripcion.set('Sin Vigencia Activa')
                     self.folio.set("")
                     self.entryfolio.focus()
-                    return False                                               
+                    return False
                 elif VigAct <= datetime.today()+timedelta(days = 5):
                     self.descripcion.set('Vigencia Vencida')
                     self.folio.set("")
@@ -794,7 +795,6 @@ class FormularioOperacion:
                     io.output(barrera,0)#abre la barrera
                     time.sleep (1)
                     io.output(barrera,1)
-
     def PensionadosSalida(self):
        numtarjeta=str(self.NumTarjeta2.get(), )
        #print(numtarjeta)
