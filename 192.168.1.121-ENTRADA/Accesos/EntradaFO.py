@@ -288,8 +288,7 @@ class FormularioOperacion:
                 VigAct=fila[0]
                 Estatus=fila[1]
                 Vigencia =fila[2]
-                Tolerancia = fila[3]
-                Tolerancia = int(Tolerancia)
+                Tolerancia = int(fila[3])
 
                 # Obtener la fecha y hora actual en formato deseado
                 VigAct = VigAct.strftime("%Y-%m-%d %H:%M:%S")
