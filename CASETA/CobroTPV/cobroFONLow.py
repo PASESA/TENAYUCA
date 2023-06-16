@@ -25,7 +25,7 @@ TipoPromocion = 1
 
 ###--###
 p = Usb(0x04b8, 0x0e15, 0)
-penalizacion_con_importe = True
+penalizacion_con_importe = False
 
 
 
@@ -96,7 +96,7 @@ class FormularioOperacion:
         self.MaxId.set(masuno)
 
         folio_cifrado = self.operacion1.cifrar_folio(folio = masuno)
-        print(f"Folio cifrado: {folio_cifrado}")
+        #print(f"Folio cifrado: {folio_cifrado}")
 
         #Generar QR
         self.operacion1.generar_QR(folio_cifrado)
@@ -365,14 +365,13 @@ class FormularioOperacion:
 
                 # Calcular el importe basado en las horas y días de permanencia
                 if horas_dentro <= 24:
-                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 20))
+                    importe = 250 + ((ffeecha.days) * 720 + (horas_dentro * 20))
                 if horas_dentro > 24 or ffeecha.days >= 1:
-                    importe = 200 + ((ffeecha.days) * 720 + (horas_dentro * 20))
+                    importe = 250 + ((ffeecha.days) * 720 + (horas_dentro * 20))
 
             else:
-                importe = 200
+                importe = 250
 
-            # Establecer el importe y mostrarlo en la etiqueta label9
             self.importe.set(importe)
             self.IImporte.config(text=self.importe.get())
 
@@ -620,7 +619,7 @@ class FormularioOperacion:
 
 
         self.operacion1.generar_QR(imgqr)
-        print(f"QR salida: {imgqr}")
+        #print(f"QR salida: {imgqr}")
 
 
         #Compro de comprobante
@@ -702,7 +701,7 @@ class FormularioOperacion:
             fechaOrigen = datetime.strptime(valor, '%Y-%m-%d %H:%M:%S')
             promoTipo = str(self.PrTi.get(),)
             vobo = "lmf"#este
-            datos=(vobo, importe1, ffeecha1, fechaOrigen, fechaActual, promoTipo, folio1)
+            datos=(vobo, importe1, ffeecha1, fechaOrigen, fechaActual, promoTipo, TipoPromocion, folio1)
             self.operacion1.guardacobro(datos)
             self.descripcion.set('')
             self.precio.set('')
@@ -725,13 +724,14 @@ class FormularioOperacion:
            global TipoPromocion
            TipoPromocion = str(self.promo.get(), )#se recibe el codigo
            respuesta=self.operacion1.ValidaPromo(TipoPromocion)
-           print(str(respuesta))
+
            if respuesta:
               mb.showwarning("IMPORTANTE", "LA PROMOCION YA FUE APLICADA")
+              self.promo.set("")
            else:
 
               TipoProIni=TipoPromocion[:8]
-              print("TIPO",str(TipoProIni))
+
               if TipoProIni==("a1 anuie") or TipoProIni==("A1 ANUIE"):
                    fecha = datetime.today()
                    fecha1= fecha.strftime("%Y-%m-%d %H:%M:%S")
@@ -755,7 +755,7 @@ class FormularioOperacion:
                         importe=(importe - 20)
 
                    self.importe.set(importe)
-                   self.label9.configure(text =(importe, "cobro"))
+                   self.IImporte.config(text=self.importe.get())
                    self.PrTi.set("ANUIS1")
                    #mb.showinfo("liverpool",importe)
                    self.promo.set("")
@@ -784,7 +784,7 @@ class FormularioOperacion:
                         importe=(importe - 40)
                         #importe = ((ffeecha.days)*720 + (horas_dentro * 30)+(minutos_dentro)*1)
                    self.importe.set(importe)
-                   self.label9.configure(text =(importe, "cobro"))
+                   self.IImporte.config(text=self.importe.get())
                    self.PrTi.set("ANUIS2")
                    #mb.showinfo("liverpool",importe)
                    self.promo.set("")
@@ -808,10 +808,10 @@ class FormularioOperacion:
                    if horas_dentro >= 8:
                         importe = str(self.importe.get(), )
                         importe = int(importe)
-                        importe=(importe - 140)
-                        #importe = ((ffeecha.days)*720 + (horas_dentro * 30)+(minutos_dentro)*1)
+                        importe=(importe - 80)
+                        #importe = ((ffeecha.days)*720 + (horas_dentro * 30)+(minutos_dentro)*1)k
                    self.importe.set(importe)
-                   self.label9.configure(text =(importe, "cobro"))
+                   self.IImporte.config(text=self.importe.get())
                    self.PrTi.set("EVENTO")
                    #mb.showinfo("liverpool",importe)
                    self.promo.set("")
@@ -838,7 +838,7 @@ class FormularioOperacion:
                         importe=(importe - 140)
                         #importe = ((ffeecha.days)*720 + (horas_dentro * 30)+(minutos_dentro)*1)
                    self.importe.set(importe)
-                   self.label9.configure(text =(importe, "cobro"))
+                   self.IImporte.config(text=self.importe.get())
                    self.PrTi.set("CENEVAL")
                    #mb.showinfo("liverpool",importe)
                    self.promo.set("")
@@ -2011,7 +2011,7 @@ class FormularioOperacion:
                     Estatus=fila[14] # Vigencia Activo/Inactiva
                     monto=fila[15]
                     cortesia=fila[16]
-                    print(monto)
+
                     if cortesia == "Si" :
                        mb.showinfo("IMPORTANTE", "El Pensionado cuenta con CORTESIA")
                        self.NumTarjeta3.set("")
@@ -2079,9 +2079,9 @@ class FormularioOperacion:
         try:
             if (self.variable_tipo_pago_transferencia.get() == False) and (self.variable_tipo_pago_efectivo.get() == False):raise TypeError("Selecciona una forma de pago")
 
-            #usuario = self.operacion1.nombre_usuario_activo()
-            #usuario = str(usuario[0][0])
-            usuario = "prueba"
+            usuario = self.operacion1.nombre_usuario_activo()
+            usuario = str(usuario[0][0])
+            #usuario = "prueba"
 
             #Generales
             nummes=int(self.comboMensual.get())
@@ -2210,6 +2210,7 @@ class FormularioOperacion:
 
         except Exception as e:
             print(e)
+            traceback.print_exc()
             mb.showwarning("IMPORTANTE", "Ha ocurrido un error: Revise los datos capturados")
             self.Monto.set("")
             self.comboMensual.current(0)
