@@ -203,7 +203,6 @@ class FormularioOperacion:
         self.MaxId.set(masuno)
 
         fechaEntro = datetime.today()
-        fechaEntro = fechaEntro - timedelta(minutes = 1, seconds = fechaEntro.second)
 
         horaentrada = str(fechaEntro)
         horaentrada=horaentrada[:19]
