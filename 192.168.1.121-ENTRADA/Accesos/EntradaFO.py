@@ -314,10 +314,9 @@ class FormularioOperacion:
                 limite = VigAct + timedelta(days=Tolerancia)
                 print(limite)
 
+
                 if hoy >= limite:
-                    datos1=('Afuera','VENCIDA', Existe)
-                    self.labelMensaje.config(text= "Vigencia VENCIDA")
-                    self.operacion1.UpdPensionado(datos1)
+                    self.labelMensaje.config(text= "Vigencia Vencida")
                     #mb.showwarning("IMPORTANTE", "NO PUEDE ACCEDER: La Vigencia esta vencida")
                     self.NumTarjeta4.set("")               
                     self.entryNumTarjeta4.focus()
