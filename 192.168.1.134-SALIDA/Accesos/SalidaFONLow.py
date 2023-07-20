@@ -784,8 +784,26 @@ class FormularioOperacion:
                     self.entryfolio.focus()
                     return False                                                       
                 else:
-                    Salida=datetime.today()
-                    datos=(Salida, 'Afuera', Existe)
+                    entrada = self.operacion1.consultar_UpdMovsPens(Existe)
+                    entrada = entrada[0][0]
+                    # Obtener la fecha y hora actual en formato deseado
+                    entrada = entrada.strftime("%Y-%m-%d %H:%M:%S")
+                    # Convertir la cadena de caracteres en un objeto datetime
+                    entrada = datetime.strptime(entrada, "%Y-%m-%d %H:%M:%S")
+
+                    Salida=datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+                    # Convertir la cadena de caracteres en un objeto datetime
+                    Salida = datetime.strptime(Salida, "%Y-%m-%d %H:%M:%S")
+
+                    tiempo_total = Salida - entrada
+                    print("--------------------------")
+                    print(f"entro: {entrada}")
+                    print(f"salio: {Salida}")
+                    print(f"tiempo:{tiempo_total}")
+                    print("--------------------------")
+
+                    datos=(Salida, tiempo_total, 'Afuera', Existe)
+
                     datos1=('Afuera', Existe)                       
                     self.operacion1.UpdMovsPens(datos)
                     self.operacion1.UpdPens2(datos1)
