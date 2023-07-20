@@ -215,7 +215,7 @@ class FormularioOperacion:
 
         folio_cifrado = self.operacion1.cifrar_folio(folio = masuno)
 
-		#Generar QR
+        #Generar QR
         self.operacion1.generar_QR(folio_cifrado)
         
 
@@ -289,6 +289,18 @@ class FormularioOperacion:
                 Vigencia =fila[2]
                 Tolerancia = int(fila[3])
 
+                if VigAct is None:
+                    self.labelMensaje.config(text="Sin Vigencia Activa\nTajeta desactivada")
+                    self.NumTarjeta4.set("")               
+                    self.entryNumTarjeta4.focus()
+                    return False
+
+                elif Estatus == 'Adentro':
+                    self.labelMensaje.config(text="Ya está Adentro")
+                    self.Placa.set("")
+                    self.entryPlaca.focus()
+                    return False
+
                 # Obtener la fecha y hora actual en formato deseado
                 VigAct = VigAct.strftime("%Y-%m-%d %H:%M:%S")
                 # Convertir la cadena de caracteres en un objeto datetime
@@ -300,24 +312,9 @@ class FormularioOperacion:
                 hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
 
                 limite = VigAct + timedelta(days=Tolerancia)
-
                 print(limite)
 
-                if Estatus == 'Adentro' :
-                    self.labelMensaje.config(text= "Ya está Adentro")
-                    #mb.showwarning("IMPORTANTE", "NO PUEDE ACCEDER: Ya existe un auto adentro registrado")
-                    self.NumTarjeta4.set("")               
-                    self.entryNumTarjeta4.focus()
-                    return False
-                elif VigAct == 'Inactiva' :
-                    self.labelMensaje.config(text= "Sin Vigencia Activa")
-                    #mb.showwarning("IMPORTANTE", "SIN VIGENCIA ACTIVA: Pensionado sin pago, favor de realizar pago")
-                    self.NumTarjeta4.set("")               
-                    self.entryNumTarjeta4.focus()
-                    return False                        
-
-
-                elif hoy >= limite:
+                if hoy >= limite:
                     datos1=('Afuera','VENCIDA', Existe)
                     self.labelMensaje.config(text= "Vigencia VENCIDA")
                     self.operacion1.UpdPensionado(datos1)
@@ -325,6 +322,7 @@ class FormularioOperacion:
                     self.NumTarjeta4.set("")               
                     self.entryNumTarjeta4.focus()
                     return False
+
                 else:
                     Entrada=datetime.today()
                     datos=(Existe, tarjeta, Entrada, 'Adentro')

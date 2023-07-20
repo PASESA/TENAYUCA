@@ -201,8 +201,8 @@ class View_agregar_pensionados:
 
 		etiqueta_monto_dato_pension = ttk.Label(seccion_datos_pension, text='Monto X Mes: ')
 		etiqueta_monto_dato_pension.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NW)
-		campo_monto_dato_pension = ttk.Entry(seccion_datos_pension, textvariable=self.variable_monto)
-		campo_monto_dato_pension.grid(row=0, column=1, padx=5, pady=5)
+		self.campo_monto_dato_pension = ttk.Entry(seccion_datos_pension, textvariable=self.variable_monto)
+		self.campo_monto_dato_pension.grid(row=0, column=1, padx=5, pady=5)
 
 		etiqueta_cortesia_dato_pension = ttk.Label(seccion_datos_pension, text='Cortesia: ')
 		etiqueta_cortesia_dato_pension.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
@@ -252,19 +252,39 @@ class View_agregar_pensionados:
 			variable_tolerancia = 5
 			variable_estatus = "Inactiva"
 
+			try:
+				variable_numero_tarjeta = int(variable_numero_tarjeta)
+
+			except Exception as e:
+				traceback.print_exc()
+				mb.showerror("Error", "Ingresa un numero de tarjeta valido")
+				self.campo_numero_tarjeta.focus()
+				return
+
+			try:
+				variable_monto = int(variable_monto)
+
+			except Exception as e:
+				traceback.print_exc()
+				mb.showerror("Error", "Ingresa un monto valido")
+				self.campo_monto_dato_pension.focus()
+				return
+
+
 			if self.__variable_es_reposicion.get() == "Si":
 				respuesta = mb.askyesno("Advertencia", "¿Estas seguro de que la tarjeta registrada es de reposición? De ser asi no olvides desactivar la antigua tarjeta")
 				variable_estatus = "Reposicion"
 				if respuesta is False:return
 
 
-			if len(variable_numero_tarjeta) == 0 or len(variable_nombre) == 0 or len(variable_apellido_1) == 0 or len(variable_apellido_2) == 0 or len(variable_fecha_alta) == 0 or len(variable_telefono_1) == 0 or len(variable_telefono_2) == 0 or len(variable_ciudad) == 0 or len(variable_colonia) == 0 or len(variable_cp) == 0 or len(variable_numero_calle) == 0 or len(variable_placas) == 0 or len(variable_auto_modelo) == 0 or len(variable_auto_color) == 0 or len(variable_monto) == 0 or len(variable_cortesia) == 0 or len(str(variable_tolerancia)) == 0:
+			if len(variable_nombre) == 0 or len(variable_apellido_1) == 0 or len(variable_apellido_2) == 0 or len(variable_fecha_alta) == 0 or len(variable_telefono_1) == 0 or len(variable_telefono_2) == 0 or len(variable_ciudad) == 0 or len(variable_colonia) == 0 or len(variable_cp) == 0 or len(variable_numero_calle) == 0 or len(variable_placas) == 0 or len(variable_auto_modelo) == 0 or len(variable_auto_color) == 0 or len(variable_cortesia) == 0 or len(str(variable_tolerancia)) == 0:
 				raise IndexError("No dejar campos en blanco")
 
-			if variable_cortesia == "No" and variable_monto == 0:raise IndexError("Ingrese el monto a pagar")
+			if variable_cortesia == "No" and variable_monto == 0:
+				raise TypeError("Ingrese el monto a pagar")
 			if variable_cortesia == "Si": variable_monto = 0
 
-			variable_monto = int(variable_monto)
+
 			
 			datos_pensionado = (variable_numero_tarjeta, variable_nombre, variable_apellido_1, variable_apellido_2, variable_fecha_alta, variable_telefono_1, variable_telefono_2, variable_ciudad, variable_colonia, variable_cp, variable_numero_calle, variable_placas, variable_auto_modelo, variable_auto_color, variable_monto, variable_cortesia, variable_tolerancia, variable_estatus)
 
@@ -282,7 +302,7 @@ class View_agregar_pensionados:
 
 		except ValueError as e:
 			traceback.print_exc()
-			mb.showerror("Error", "Ingrese un valor valido para el monto de la pensión")
+			mb.showerror("Error", e)
 		except TypeError as e:
 			traceback.print_exc()
 			mb.showerror("Error", e)
