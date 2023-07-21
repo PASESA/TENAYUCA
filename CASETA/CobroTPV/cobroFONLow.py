@@ -1402,7 +1402,7 @@ class FormularioOperacion:
 
         respuesta = self.operacion1.total_pensionados_corte(Numcorte)
         if len(respuesta) == 0:
-            p.cut()
+            pass
 
         else:
             p.text("Cantidad e Importes Pensiones"+'\n')
