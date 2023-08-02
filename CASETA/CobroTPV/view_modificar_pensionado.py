@@ -5,36 +5,40 @@ from tkinter import StringVar, IntVar
 
 from datetime import datetime
 
-from queries import pensionados
+from queries import Pensionados
 import traceback
 
 
 from dateutil.relativedelta import relativedelta
 
 class View_modificar_pensionados():
+	"""Clase para mostrar la ventana de modificación de datos de un pensionado."""
 
 	def __init__(self, datos_pensionado):
-		self.query = pensionados()
+		"""
+		Constructor de la clase. Inicializa la ventana y los atributos.
+
+		Args:
+			datos_pensionado (tuple): Tupla con los datos del pensionado a modificar.
+		"""
+		self.query = Pensionados()
 		self.datos_pensionado = datos_pensionado
 
-		# Crea la ventana principal
+		# Crear la ventana principal
 		self.panel_crud = tk.Toplevel()
 
 		# Se elimina la funcionalidad del botón de cerrar
 		self.panel_crud.protocol("WM_DELETE_WINDOW", lambda: self.desconectar())
-
-		# Deshabilita los botones de minimizar y maximizar
-		# self.panel_crud.attributes('-toolwindow', True)
 
 		self.panel_crud.title(f'Modificar pensionado')
 
 		# Configura la columna principal del panel para que use todo el espacio disponible
 		self.panel_crud.columnconfigure(0, weight=1)
 
-
+		# Variables para almacenar los datos del pensionado
 		self.variable_numero_tarjeta = StringVar()
 		self.variable_numero_tarjeta.set(datos_pensionado[0][0])
-		
+
 		self.variable_nombre = StringVar()
 		self.variable_nombre.set(datos_pensionado[0][1])
 
@@ -92,36 +96,19 @@ class View_modificar_pensionados():
 		# Llama a la función interface() que configura la interfaz gráfica
 		self.interface()
 
-
-		# # Calcula la posición de la ventana en la pantalla
-		# pos_x = int(self.seccion_tabla.winfo_screenwidth() / 2)
-		# pos_y = int(self.seccion_tabla.winfo_screenheight() / 2)
-
-		# # Establece la geometría de la ventana con su posición y tamaño
-		# self.panel_crud.geometry(f"+{pos_x}+{pos_y}")
 		self.panel_crud.resizable(False, False)
 
 		# Inicia el loop principal de la ventana
 		self.panel_crud.mainloop()
 
 	def interface(self):
-		"""
-		Crea toda la interface para cambiar de conexion
+		""" Crea la interfaz gráfica de la ventana de modificación."""
 
-		:param None: 
-
-		:raises None: 
-
-		:return:
-			- None
-		"""
-		# Se crea un Label Frame principal para la sección superior
+		# Crear un Label Frame principal para la sección superior
 		seccion_superior = tk.LabelFrame(self.panel_crud, text='')
 		seccion_superior.columnconfigure(1, weight=1)
 		seccion_superior.propagate(True)
 		seccion_superior.grid(row=0, column=0, sticky=tk.NSEW)
-
-		##########################################################################################################
 
 		# Se crea un Label Frame para la sección de la conexión
 		etiqueta_user = tk.Label(seccion_superior, text=f'Bienvenido/a')
@@ -229,10 +216,10 @@ class View_modificar_pensionados():
 
 		campo_cortesia_dato_pension.grid(row=1, column=1, padx=1, pady=1, sticky=tk.NW)
 
-		etiqueta_color_auto_pensionado = ttk.Label(seccion_datos_pension, text='Tolerancia: ')
-		etiqueta_color_auto_pensionado.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NW)
-		campo_color_auto_pensionado = ttk.Entry(seccion_datos_pension, textvariable=self.variable_tolerancia)
-		campo_color_auto_pensionado.grid(row=2, column=1, padx=5, pady=5)
+		etiqueta_tolerancia = ttk.Label(seccion_datos_pension, text='Tolerancia: ')
+		etiqueta_tolerancia.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NW)
+		self.campo_tolerancia = ttk.Entry(seccion_datos_pension, textvariable=self.variable_tolerancia)
+		self.campo_tolerancia.grid(row=2, column=1, padx=5, pady=5)
 
 
 		seccion_inferior = tk.LabelFrame(self.panel_crud, text='')
@@ -240,33 +227,50 @@ class View_modificar_pensionados():
 
 
 		# Crea un botón y lo empaqueta en la seccion_botones_consulta
-		boton_modificar_pensionado = tk.Button(seccion_inferior,  text='Desactivar tarjeta', command = self.desacivar_tarjeta, width=20, font=("Arial", 12), background="red")
+		boton_modificar_pensionado = tk.Button(seccion_inferior, text='Desactivar tarjeta', command=self.desactivar_tarjeta, width=20, font=("Arial", 12), background="red")
 		boton_modificar_pensionado.grid(row=0, column=0, padx=5, pady=5)
 
-		
 		# Crea un botón y lo empaqueta en la seccion_botones_consulta
-		boton_modificar_pensionado = tk.Button(seccion_inferior,  text='Guardar Cambios', command = self.modificar_pensionado, width=20, font=("Arial", 12), background="red")
+		boton_modificar_pensionado = tk.Button(seccion_inferior, text='Guardar Cambios', command=self.modificar_pensionado, width=20, font=("Arial", 12), background="red")
 		boton_modificar_pensionado.grid(row=0, column=1, padx=5, pady=5)
 
-		self.campo_numero_tarjeta.focus()
+	def desactivar_tarjeta(self):
+		""" Desactiva temporal o permanentemente la tarjeta del pensionado."""
+		mensaje = ""
+		respuesta = mb.askyesno("Advertencia", "¿Estas seguro de querer desactivar esta tarjeta?")
+		if respuesta:pass
+		else:
+			self.campo_tolerancia.focus()
+			return
 
-	def desacivar_tarjeta(self):
 		vigencia = self.variable_vigencia.get()
 		if vigencia == 'None':vigencia = None
 
+		if vigencia == None:
+			mb.showinfo("Alerta", "La tarjeta ya esta desactivada, para reactivar la tarjeta es necesario realizar un pago de la pensión para asignar nueva fecha de vigencia")
+			self.campo_tolerancia.focus()
+			return
+
+		respuesta = mb.askyesno("Advertencia", "¿La desactivación es temporal?")
+
+		if respuesta:
+			self.variable_estatus.set("InactivaTemp")
+			mensaje = "temporalmente"
+
+		else:
+			self.variable_estatus.set("InactivaPerm")
+			mensaje = "permanentemente"
+
 		if vigencia:
 			self.variable_vigencia.set(None)
-			self.variable_estatus.set("Inactiva")
-			mb.showinfo("Alerta", "Se ha desactivado la tarjeta")
+			mb.showinfo("Alerta", f"Se ha desactivado {mensaje} la tarjeta")
 			self.modificar_pensionado()
-		else:
-			mb.showinfo("Alerta", "La tarjeta ya esta desactivada, para reactivar la tarjeta es necesario realizar un pago de la pensión para asignar nueva fecha de vigencia")
-		
-
 
 
 	def modificar_pensionado(self):
+		""" Modifica los datos del pensionado en la base de datos."""
 		try:
+			# Obtener los datos del formulario
 			variable_numero_tarjeta = self.variable_numero_tarjeta.get()
 			variable_nombre = self.variable_nombre.get()
 			variable_apellido_1 = self.variable_apellido_1.get()
@@ -299,11 +303,9 @@ class View_modificar_pensionados():
 
 			datos_pensionado = (variable_numero_tarjeta, variable_nombre, variable_apellido_1, variable_apellido_2, variable_telefono_1, variable_telefono_2, variable_ciudad, variable_colonia, variable_cp, variable_numero_calle, variable_placas, variable_auto_modelo, variable_auto_color, variable_monto, variable_cortesia, variable_tolerancia, fecha_modificación_pensionado, vigencia, estatus)
 
-			self.query.actualizar_pensionado(datos_pensionado=datos_pensionado,Num_tarjeta = variable_numero_tarjeta)
+			self.query.actualizar_pensionado(datos_pensionado=datos_pensionado, Num_tarjeta = variable_numero_tarjeta)
 			mb.showinfo("Información", "El pensionado fue modificado correctamente")
 			self.desconectar()
-
-
 
 		except IndexError as e:
 			traceback.print_exc()
@@ -315,21 +317,9 @@ class View_modificar_pensionados():
 			traceback.print_exc()
 			mb.showerror("Error", e)
 
-
 	def desconectar(self):
-		"""
-		Cierra la ventana principal y detiene el hilo en el que se ejecuta.
-
-		:param None: 
-
-		:raises None: 
-
-		:return:
-			- None
-		"""
-		#detener el loop principal
+		""" Cierra la ventana principal y detiene el hilo en el que se ejecuta. """
 		self.panel_crud.quit()
-		# Destruye el panel principal
 		self.panel_crud.destroy()
 
 

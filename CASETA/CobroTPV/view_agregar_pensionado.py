@@ -3,14 +3,14 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import StringVar
 from datetime import datetime
-from queries import pensionados
+from queries import Pensionados
 import traceback
 
-
 class View_agregar_pensionados:
-
+	"""Clase de la vista para agregar pensionados."""
 	def __init__(self):
-		self.query = pensionados()
+		"""Inicializa una instancia de la clase ViewAgregarPensionados y crea la ventana principal de la interfaz."""
+		self.query = Pensionados()
 
 		# Crea la ventana principal
 		self.panel_crud = tk.Toplevel()
@@ -18,14 +18,12 @@ class View_agregar_pensionados:
 		# Se elimina la funcionalidad del botón de cerrar
 		self.panel_crud.protocol("WM_DELETE_WINDOW", lambda: self.desconectar())
 
-		# Deshabilita los botones de minimizar y maximizar
-		# self.panel_crud.attributes('-toolwindow', True)
-
 		self.panel_crud.title(f'Agregar pensionado')
 
 		# Configura la columna principal del panel para que use todo el espacio disponible
 		self.panel_crud.columnconfigure(0, weight=1)
 
+		# Crea las variables para los datos del pensionado
 		self.variable_numero_tarjeta = StringVar()
 		self.variable_nombre = StringVar()
 		self.variable_apellido_1 = StringVar()
@@ -42,53 +40,30 @@ class View_agregar_pensionados:
 		self.variable_auto_modelo = StringVar()
 		self.variable_auto_color = StringVar()
 
-		self.variable_vigencia = StringVar()
-		self.variable_fecha_vigencia = StringVar()
 		self.variable_monto = StringVar()
-		self.variable_estatus = StringVar()
 		self.variable_cortesia = StringVar()
 		self.variable_tolerancia = StringVar()
 		self.variable_tolerancia.set("5")
 
-
 		self.__variable_es_reposicion = StringVar()
-
 
 		self.registros = None
 
 		# Llama a la función interface() que configura la interfaz gráfica
 		self.interface()
 
-
-		# # Calcula la posición de la ventana en la pantalla
-		# pos_x = int(self.seccion_tabla.winfo_screenwidth() / 2)
-		# pos_y = int(self.seccion_tabla.winfo_screenheight() / 2)
-
-		# # Establece la geometría de la ventana con su posición y tamaño
-		# self.panel_crud.geometry(f"+{pos_x}+{pos_y}")
 		self.panel_crud.resizable(False, False)
 
 		# Inicia el loop principal de la ventana
 		self.panel_crud.mainloop()
 
 	def interface(self):
-		"""
-		Crea toda la interface para cambiar de conexion
-
-		:param None: 
-
-		:raises None: 
-
-		:return:
-			- None
-		"""
+		"""Define la interfaz gráfica para agregar pensionados."""
 		# Se crea un Label Frame principal para la sección superior
 		seccion_superior = tk.LabelFrame(self.panel_crud, text='')
 		seccion_superior.columnconfigure(1, weight=1)
 		seccion_superior.propagate(True)
 		seccion_superior.grid(row=0, column=0, sticky=tk.NSEW)
-
-		##########################################################################################################
 
 		# Se crea un Label Frame para la sección de la conexión
 		etiqueta_user = tk.Label(seccion_superior, text=f'Bienvenido/a')
@@ -217,18 +192,14 @@ class View_agregar_pensionados:
 		campo_color_auto_pensionado = ttk.Entry(seccion_datos_pension, textvariable=self.variable_tolerancia)
 		campo_color_auto_pensionado.grid(row=2, column=1, padx=5, pady=5)
 
-
-
-
 		# Crea un botón y lo empaqueta en la seccion_botones_consulta
-		boton_agregar_pensionado = tk.Button(self.panel_crud,  text='Agregar usuario', command = self.agregar_pensionado, width=20, font=("Arial", 12), background="red")
+		boton_agregar_pensionado = tk.Button(self.panel_crud,  text='Agregar usuario', command=self.agregar_pensionado, width=20, font=("Arial", 12), background="red")
 		boton_agregar_pensionado.grid(row=5, column=0, padx=5, pady=5)
 
 		self.campo_numero_tarjeta.focus()
 
-
-
 	def agregar_pensionado(self):
+		"""Agrega un nuevo pensionado con los datos ingresados."""
 		try:
 			pensionado_fecha_alta =  datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 			variable_numero_tarjeta = self.variable_numero_tarjeta.get()
@@ -285,7 +256,6 @@ class View_agregar_pensionados:
 			if variable_cortesia == "Si": variable_monto = 0
 
 
-			
 			datos_pensionado = (variable_numero_tarjeta, variable_nombre, variable_apellido_1, variable_apellido_2, variable_fecha_alta, variable_telefono_1, variable_telefono_2, variable_ciudad, variable_colonia, variable_cp, variable_numero_calle, variable_placas, variable_auto_modelo, variable_auto_color, variable_monto, variable_cortesia, variable_tolerancia, variable_estatus)
 
 			resultado = self.query.consultar_pensionado(variable_numero_tarjeta)
@@ -313,23 +283,9 @@ class View_agregar_pensionados:
 			traceback.print_exc()
 			mb.showerror("Error", e)
 
-
 	def desconectar(self):
-		"""
-		Cierra la ventana principal y detiene el hilo en el que se ejecuta.
-
-		:param None: 
-
-		:raises None: 
-
-		:return:
-			- None
-		"""
-		#detener el loop principal
+		"""Cierra la ventana principal y detiene el hilo en el que se ejecuta."""
 		self.panel_crud.quit()
-		# Destruye el panel principal
 		self.panel_crud.destroy()
 
-
-
-#View_agregar_pensionados()
+#ViewAgregarPensionados()

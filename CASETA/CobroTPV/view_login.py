@@ -1,18 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
-from view_crud_usuarios_tpv import View_CRUD_usuarios
+from view_crud_usuarios_tpv import ViewCRUDUsuarios
 from tkinter import messagebox as mb
 
-
-
 class View_Login:
-    """
-    Clase de la vista del login.
-    """
+    """Clase de la vista del login."""
     def __init__(self):
-        """
-        Inicializa una instancia de la clase Login y crea la ventana principal de la interface.
-        """
+        """Inicializa una instancia de la clase Login y crea la ventana principal de la interfaz."""
         # Crea la ventana principal
         self.window_login = tk.Toplevel()
 
@@ -39,7 +33,6 @@ class View_Login:
         self.user = tk.StringVar()
         self.password = tk.StringVar()
 
-
         # Llama al método "interface()" para construir la interfaz gráfica
         self.interface()
 
@@ -47,16 +40,7 @@ class View_Login:
         self.window_login.mainloop()
 
     def interface(self):
-        """
-            Define la interfaz gráfica de usuario.
-
-        :param None: 
-
-        :raises None: 
-
-        :return:
-            - None
-        """
+        """Define la interfaz gráfica de usuario."""
         # Crea un frame principal para la ventana
         self.seccion_principal = ttk.LabelFrame(self.window_login, text='')
         self.seccion_principal.grid(row=0, column=0, sticky=tk.NSEW)
@@ -85,67 +69,44 @@ class View_Login:
         self.boton_entrar = ttk.Button(self.seccion_principal, text='Entrar',
             command=lambda:{
                 self.desactivar(),
-                self.get_data(user = self.user.get(),password = self.password.get()),
+                self.get_data(user=self.user.get(),
+                              password=self.password.get()),
                 self.activar()
                 })
         self.boton_entrar.grid(row=1, column=0, padx=5, pady=5)
         
         campo_user.focus()
 
+    def get_data(self, user=None, password=None):
+        """Obtiene los datos de usuario y contraseña ingresados y verifica si son correctos.
 
-    def get_data(self, user= None, password=None):
+        Args:
+            user (str): Nombre de usuario ingresado.
+            password (str): Contraseña ingresada.
+        """
         if user == "Administrador" and password == "Equivocada":
-            View_CRUD_usuarios()
+            ViewCRUDUsuarios()
         else:
             mb.showerror("Error", "La contraseña es Equivocada, intente nuevamente")
             self.password.set("")
 
-
     def desconectar(self):
-        """
-        Cierra la ventana principal y detiene el hilo en el que se ejecuta.
-
-        :param None: 
-
-        :raises None: 
-
-        :return:
-            - None
-        """
-        #detener el loop principal
+        """Cierra la ventana principal y detiene el hilo en el que se ejecuta."""
+        # Detener el loop principal
         self.window_login.quit()
         # Destruye el panel principal
         self.window_login.destroy()
 
     def desactivar(self):
-        """
-        Desactiva los botones de la interface
-    
-        :param None: 
-
-        :raises None: 
-
-        :return:
-            - None
-        """
-        self.window_login.withdraw()  # oculta la ventana
+        """Desactiva los botones de la interfaz."""
+        # Oculta la ventana
+        self.window_login.withdraw()
         self.boton_entrar.config(state="disable")
 
     def activar(self):
-        """
-        Activa los botones de la interface
-
-        :param None: 
-
-        :raises None: 
-
-        :return:
-            - None
-        """
+        """Activa los botones de la interfaz."""
         self.password.set("")
         self.window_login.deiconify()
         self.boton_entrar.config(state="normal")
-
-
 
 #View_Login()
