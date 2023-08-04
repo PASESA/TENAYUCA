@@ -40,7 +40,7 @@ penalizacion_diaria_pension = 10
 
 logo_1 = "LOGO1.jpg"
 qr_imagen = "reducida.png"
-PROMOCIONES = ('EV ANUIE', 'CN CENEV', 'A2 ANUIS', "A1 ANUIE")
+PROMOCIONES = ('EV ANUIE', 'A2 ANUIS', "A1 ANUIE")#, 'CN CENEV')
 
 class FormularioOperacion:
     def __init__(self):
@@ -795,34 +795,39 @@ class FormularioOperacion:
         elif TipoProIni==("a1 anuie") or TipoProIni==("A1 ANUIE"):
 
             if self.horas_dentro <= 1:
-                importe = 0
+                if self.horas_dentro == 1 and self.minutos_dentro >= 1:
+                    importe = importe - 20
+                else:
+                    importe = 0
 
-            elif self.horas_dentro > 1:
+            else:#if self.horas_dentro > 1:
                 importe = importe - 20
 
-            text_promo = "ANUIS1"
 
+            text_promo = "ANUIS1"
 
         elif TipoProIni==("A2 ANUIS") or TipoProIni==("a2 anuis"):
 
             if self.horas_dentro <= 2:
-                importe = 0
+                if self.horas_dentro == 2 and self.minutos_dentro >= 1:
+                    importe = importe - 40
+                else:
+                    importe = 0
 
-            elif self.horas_dentro > 2:
+            else:#if self.horas_dentro > 1:
                 importe = importe - 40
 
             text_promo = "ANUIS2"
 
+        # elif TipoProIni==("CN CENEV") or TipoProIni==("cn cenev"):
 
-        elif TipoProIni==("CN CENEV") or TipoProIni==("cn cenev"):
+        #     if self.horas_dentro <= 8 and self.minutos_dentro < 1:
+        #         importe = 80
 
-            if self.horas_dentro < 8:
-                importe = 80
+        #     if self.horas_dentro >= 8:
+        #         importe = importe - 140
 
-            if self.horas_dentro >= 8:
-                importe = importe - 140
-
-            text_promo = "CENEVAL"
+        #     text_promo = "CENEVAL"
 
         # Añade "Danado" a la descripción de la promoción si el boleto está marcado como "Danado"
         if valida_promo == "Danado":
