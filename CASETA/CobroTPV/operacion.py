@@ -4,12 +4,17 @@ import random
 import qrcode
 
 class Operacion:
+    def __init__(self):
+        self.host = "192.168.1.121"
+        self.user = "Aurelio"
+        self.password = "RG980320"
+        self.database = "Parqueadero1"
 
     def abrir(self):
-        conexion=pymysql.connect(host="192.168.1.121",
-                                    user="Aurelio",
-                                    passwd="RG980320",
-                                    database="Parqueadero1")
+        conexion=pymysql.connect(host=self.host,
+                                 user=self.user,
+                                 passwd=self.password,
+                                 database=self.database)
 
         return conexion
 
