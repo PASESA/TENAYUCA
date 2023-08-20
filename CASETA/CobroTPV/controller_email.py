@@ -85,8 +85,8 @@ class ToolsEmail:
             database = self.DB.database
 
             # Comando mysqldump (dependiendo del sistema operativo)
-            # command = f"mysqldump -h {host} -u {user} -p{password} {database} > {backup_path}"
-            command = f"cd C:/xampp/mysql/bin && mysqldump -h {host} -u {user} -p{password} {database} > {backup_path}"
+            command = f"mysqldump -h {host} -u {user} -p{password} {database} > {backup_path}"
+            # command = f"cd C:/xampp/mysql/bin && mysqldump -h {host} -u {user} -p{password} {database} > {backup_path}"
 
             run(command, shell=True)
 
