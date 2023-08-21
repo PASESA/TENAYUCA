@@ -7,11 +7,9 @@ from escpos.printer import Usb
 from zipfile import ZipFile, ZIP_DEFLATED
 from subprocess import run, CalledProcessError
 from os import path, getcwd, remove
-import requests
+from requests import get
 from requests.exceptions import RequestException
 from operacion import Operacion
-
-from sys import exit
 
 
 class ToolsEmail:
@@ -32,7 +30,7 @@ class ToolsEmail:
             bool: True si hay una conexión activa a Internet, False si no se puede establecer la conexión.
         """
         try:
-            response = requests.get(url, timeout=timeout)
+            response = get(url, timeout=timeout)
             # Lanza una excepción si la respuesta HTTP no es exitosa
             response.raise_for_status()
             print("Conexión a Internet activa.")
@@ -68,6 +66,43 @@ class ToolsEmail:
             print(f'Error al comprimir el archivo: {e}')
             return None
 
+    def is_file_empty(self, file_path) -> bool:
+        """Verifica si un archivo está vacío o no.
+
+        Args:
+            file_path (str): La ruta del archivo que se va a verificar.
+
+        Returns:
+            bool: True si el archivo está vacío, False si no lo está.
+        """
+        try:
+            # Obtiene el tamaño del archivo en bytes y verifica si es cero
+            return True if path.getsize(file_path) == 0 else False
+
+        except Exception as e:
+            # Maneja cualquier error que pueda ocurrir
+            print(f"Error al verificar el archivo: {e}")
+            return False
+
+    def remove_file(self, path_file: str) -> None:
+        """
+        Elimina un archivo del sistema.
+
+        Esta función toma la ruta de un archivo como entrada y trata de eliminarlo del sistema de archivos.
+
+        Args:
+            path_file (str): La ruta del archivo que se va a eliminar.
+
+        """
+        try:
+            # Intenta eliminar el archivo
+            remove(path_file)
+            print(f"Archivo [{path_file}] fue eliminado exitosamente.")
+        except Exception as e:
+            # Maneja cualquier error que pueda ocurrir al intentar eliminar el archivo
+            print(f"No se pudo eliminar el archivo [{path_file}]: {e}")
+
+
     def get_DB(self, backup_path: str = '/ruta/de/respaldo/Parqueadero1.sql') -> str or None:
         """Genera un respaldo de la base de datos utilizando el comando mysqldump.
 
@@ -90,16 +125,18 @@ class ToolsEmail:
 
             run(command, shell=True)
 
-            if path.exists(backup_path):
+            if path.exists(backup_path) and not self.is_file_empty(backup_path):
                 print("Base de datos respaldada exitosamente.")
                 backup_path = path.abspath(backup_path)
                 return backup_path
             else:
                 print("El archivo de respaldo no se creó correctamente.")
+                self.remove_file(backup_path)
                 return None
 
         except CalledProcessError:
             print("Error al crear el respaldo.")
+            self.remove_file(backup_path)
             return None
 
 class SendEmail:
@@ -151,13 +188,10 @@ class SendEmail:
                 msg.attach(MIMEText(message, 'plain'))
 
                 zip_file = self.tools.compress_file_to_zip(file)
+                self.tools.remove_file(file)
 
-                if zip_file:
-                    try:
-                        remove(file)
-                        print("Archivo .sql eliminado exitosamente.")
-                    except Exception as e:
-                        print(f"No se pudo eliminar el archivo .sql: {e}")
+                if zip_file is None:
+                    return False
 
                 # Adjuntar el archivo al correo
                 with open(zip_file, 'rb') as f:
@@ -177,11 +211,7 @@ class SendEmail:
                     server.quit()
 
                 print('Correo enviado exitosamente.')
-                try:
-                    remove(zip_file)
-                    print("Archivo .zip eliminado exitosamente.")
-                except Exception as e:
-                    print(f"No se pudo eliminar el archivo .zip: {e}")
+                self.tools.remove_file(zip_file)
                 return True
 
             except Exception as e:
@@ -240,18 +270,14 @@ def main() -> None:
         # Instanciar el objeto Usb para imprimir el resultado
         printer = Usb(0x04b8, 0x0202, 0)
 
-        # Alinear el text al centro
+        # Alinea al centro el texto
         printer.set(align = "center")
 
         # Imprimir separadores y mensaje de resultado en la consola
         printer.text("-" * 30 + "\n")
         printer.text(f"{message_info}\n")
         printer.text("-" * 30 + "\n")
-
-        # Corta el paél
         printer.cut()
-
-        # Finaliza la conexion con la impresora
         printer.close()
 
         # Imprimir el mensaje en la consola
@@ -259,7 +285,6 @@ def main() -> None:
     except Exception as e:
         print(e)
 
-    exit()
 
 
 if __name__ == "__main__":
