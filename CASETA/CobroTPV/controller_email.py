@@ -268,7 +268,7 @@ def main() -> None:
         message_info = call_process()
 
         # Instanciar el objeto Usb para imprimir el resultado
-        printer = Usb(0x04b8, 0x0202, 0)
+        printer = Usb(0x04b8, 0x0e15, 0)
 
         # Alinea al centro el texto
         printer.set(align = "center")
