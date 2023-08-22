@@ -124,7 +124,7 @@ class FormularioOperacion:
 
         horaentrada = str(fechaEntro)
         horaentrada=horaentrada[:19]
-        self.labelhr.configure(text=(horaentrada[:-3], "Entró"))
+        self.labelhr.configure(text=(horaentrada[:-3], "Entro"))
         corteNum = 0
         placa=str(self.Placa.get(), )
         datos=(fechaEntro, corteNum, placa)
@@ -151,7 +151,7 @@ class FormularioOperacion:
     #########################fin de pagina1 inicio pagina2#########################
     def consulta_por_folio(self):
         self.pagina2 = ttk.Frame(self.cuaderno1)
-        self.cuaderno1.add(self.pagina2, text=" Módulo de Cobro")
+        self.cuaderno1.add(self.pagina2, text=" Modulo de Cobro")
         #en el frame
         self.FOLIO_QR=ttk.LabelFrame(self.pagina2, text="FOLIO_QR")
         self.FOLIO_QR.grid(column=0, row=0, padx=5, pady=10, sticky=tk.NW)
@@ -209,7 +209,7 @@ class FormularioOperacion:
         self.lbl3.grid(column=0, row=3, padx=4, pady=4)
 
 
-        self.IImporte = ttk.Label(self.labelframe3, text="") #Creación del Label
+        self.IImporte = ttk.Label(self.labelframe3, text="") #Creacion del Label
         self.IImporte.config(width =4)
         self.IImporte.config(background="white") #Cambiar color de fondo
         self.IImporte.config(font=('Arial', 48)) #Cambiar tipo y tamaño de fuente
@@ -327,7 +327,7 @@ class FormularioOperacion:
 
     def BoletoPerdido_conFolio(self):
         """
-        Esta función se encarga de manejar el cobro de un boleto perdido con folio.
+        Esta funcion se encarga de manejar el cobro de un boleto perdido con folio.
 
         Verifica si se ha ingresado un número de folio para el boleto perdido y realiza las operaciones correspondientes.
         Calcula la permanencia del vehículo y el importe a cobrar.
@@ -352,7 +352,7 @@ class FormularioOperacion:
         # Consultar los datos correspondientes al folio
         respuesta = self.DB.consulta(datos)
         if len(respuesta) > 0:
-            # Establecer la descripción y precio basados en la respuesta
+            # Establecer la descripcion y precio basados en la respuesta
             self.fecha_entrada.set(respuesta[0][0])
             self.fecha_salida.set(respuesta[0][1])
             self.Placa.set(respuesta[0][6])
@@ -383,13 +383,13 @@ class FormularioOperacion:
         else:
             # Limpiar campos y mostrar mensaje de error
             self.limpiar_campos()
-            mb.showinfo("Información", "No existe un auto con dicho código")
+            mb.showinfo("Informacion", "No existe un auto con dicho codigo")
 
     def BoletoPerdido_sinFolio(self):
         """
-        Esta función se encarga de imprimir un boleto perdido sin un número de folio especificado.
+        Esta funcion se encarga de imprimir un boleto perdido sin un número de folio especificado.
 
-        Verifica si se ha confirmado la impresión del boleto perdido.
+        Verifica si se ha confirmado la impresion del boleto perdido.
         Genera un boleto nuevo para poder cobrar boletos que han sido extraviados.
         Agrega el registro del pago a la base de datos.
 
@@ -444,7 +444,7 @@ class FormularioOperacion:
         # Obtener folio
         datos=str(self.folio.get())
 
-        # Si la caja de texto esta vacia limpia la información en pantalla
+        # Si la caja de texto esta vacia limpia la informacion en pantalla
         if len(datos) == 0:
             self.limpiar_campos()
             self.entryfolio.focus()
@@ -466,7 +466,7 @@ class FormularioOperacion:
 
         respuesta=self.DB.consulta(folio)
         if len(respuesta) == 0:
-            mb.showinfo("Información", "No existe un auto con dicho código")
+            mb.showinfo("Informacion", "No existe un auto con dicho codigo")
             self.limpiar_campos()
             return
 
@@ -478,9 +478,9 @@ class FormularioOperacion:
 
     def CalculaPermanencia(self):
         """
-        Esta función calcula la permanencia del folio seleccionado.
+        Esta funcion calcula la permanencia del folio seleccionado.
 
-        Realiza diferentes cálculos basados en la información del boleto y actualiza los valores correspondientes.
+        Realiza diferentes cálculos basados en la informacion del boleto y actualiza los valores correspondientes.
 
         :param self: Objeto de la clase que contiene los atributos y métodos necesarios.
 
@@ -496,15 +496,15 @@ class FormularioOperacion:
             # Si el valor de salida tiene más de 5 caracteres, significa que ya ha sido cobrado
             self.label15.configure(text=("Este Boleto ya Tiene cobro"))
 
-            # Realiza una consulta con el folio seleccionado para obtener información adicional del boleto
+            # Realiza una consulta con el folio seleccionado para obtener informacion adicional del boleto
             respuesta = self.DB.consulta({self.folio.get()})
 
-            # Imprime en una caja de texto la información del boleto cuando ya ha sido cobrado
+            # Imprime en una caja de texto la informacion del boleto cuando ya ha sido cobrado
             self.scrol_datos_boleto_cobrado.delete("1.0", tk.END)
             for fila in respuesta:
                 self.scrol_datos_boleto_cobrado.insert(
                     tk.END,
-                    f"Folio: {fila[2]}\nEntró: {str(fila[0])[:-3]}\nSalió: {str(fila[1])[:-3]}\nTiempo: {str(fila[3])[:-3]}\nTarifa: {fila[4]}\nImporte: {fila[5]}"
+                    f"Folio: {fila[2]}\nEntro: {str(fila[0])[:-3]}\nSalio: {str(fila[1])[:-3]}\nTiempo: {str(fila[3])[:-3]}\nTarifa: {fila[4]}\nImporte: {fila[5]}"
                 )
 
             pregunta = mb.askyesno("Advertencia", "Este boleto ya tiene cobro ¿Desea reimprimir el comprobante de pago?")
@@ -580,7 +580,7 @@ class FormularioOperacion:
             # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 20 unidades
             importe = 20
         else:
-            # Si la permanencia es mayor a 1 hora, se calcula el importe según una fórmula específica
+            # Si la permanencia es mayor a 1 hora, se calcula el importe según una formula específica
             importe = ((self.dias_dentro) * 250 + (self.horas_dentro * 20) + (minutos) * 5)
 
         # Establecer el importe y mostrarlo
@@ -631,7 +631,7 @@ class FormularioOperacion:
         Args:
             titulo (str, optional): El título del comprobante. Por defecto es 'Comprobante de pago'.
             imagen_logo (bool, optional): Indica si se debe imprimir una imagen de logo en el comprobante. Por defecto es True.
-            QR_salida (bool, optional): Indica si se debe imprimir un código QR de salida en el comprobante. Por defecto es False.
+            QR_salida (bool, optional): Indica si se debe imprimir un codigo QR de salida en el comprobante. Por defecto es False.
         """
 
         # Obtiene los valores de diferentes variables desde las variables de control
@@ -645,22 +645,22 @@ class FormularioOperacion:
 
         valor = 'N/A'
 
-        # Configuración de la impresora
+        # Configuracion de la impresora
         p.set(align="center")
         p.text(f"{titulo}\n")
 
         if titulo == "Boleto Cancelado":
-            # Sección de comprobante para boletos cancelados
+            # Seccion de comprobante para boletos cancelados
             p.set(align="left")
 
             p.text(f'Folio boleto cancelado: {Folio}\n')
             hoy = datetime.today().strftime("%b-%d-%A-%Y %H:%M:%S")
             p.set('Big line\n', font='b')
             p.text(f'Fecha: {hoy[:-3]}\n')
-            p.text(f'El auto entró: {Entrada}\n')
-            p.text(f'El auto salió: {Salida}\n')
+            p.text(f'El auto entro: {Entrada}\n')
+            p.text(f'El auto salio: {Salida}\n')
         else:
-            # Sección de comprobante para pagos normales o boletos perdidos
+            # Seccion de comprobante para pagos normales o boletos perdidos
 
             if Placa == "BoletoPerdido":
                 # Si es un boleto perdido, muestra un mensaje especial
@@ -673,16 +673,17 @@ class FormularioOperacion:
                 # Imprimir el logo si está habilitado
                 p.image(logo_1)
                 print("Imprime logo")
+            p.set(align="left")
 
             p.text("El importe es: $" + Importe + "\n")
-            p.text('El auto entró: ' + Entrada + '\n')
-            p.text('El auto salió: ' + Salida + '\n')
-            p.text('El auto permaneció: ' + TiempoTotal + '\n')
+            p.text('El auto entro: ' + Entrada + '\n')
+            p.text('El auto salio: ' + Salida + '\n')
+            p.text('El auto permanecio: ' + TiempoTotal + '\n')
             p.text('El folio del boleto es: ' + Folio + '\n')
             p.text('TIPO DE COBRO: ' + TarifaPreferente + '\n')
 
             if QR_salida:
-                # Imprimir el código QR de salida si está habilitado
+                # Imprimir el codigo QR de salida si está habilitado
                 p.set(align="center")
                 p.image(qr_imagen)
                 print("Imprime QR salida")
@@ -691,20 +692,20 @@ class FormularioOperacion:
 
 
     def GuardarCobro(self):
-        """Guarda la información de un cobro realizado en la base de datos."""
+        """Guarda la informacion de un cobro realizado en la base de datos."""
 
-        # Obtener el valor del código QR de promoción (si está presente, de lo contrario, será None)
+        # Obtener el valor del codigo QR de promocion (si está presente, de lo contrario, será None)
         QRPromo = self.promo_auxiliar.get()
         if QRPromo == '': QRPromo = None
 
         # Obtener el valor del folio del boleto
         folio = self.folio.get()
 
-        # Realiza una consulta con el folio seleccionado para obtener información adicional del boleto
+        # Realiza una consulta con el folio seleccionado para obtener informacion adicional del boleto
         respuesta = self.DB.consulta(folio)
 
         if len(respuesta) == 0:
-            # Si no se encuentra el boleto con el folio proporcionado, muestra un mensaje de error y sale de la función
+            # Si no se encuentra el boleto con el folio proporcionado, muestra un mensaje de error y sale de la funcion
             mb.showerror("Error", f"Ha ocurrido un error al realizar el cobro, escanee nuevamente el QR")
             return
 
@@ -715,7 +716,7 @@ class FormularioOperacion:
         TarifaPreferente = self.TarifaPreferente.get()
         importe = self.importe.get()
 
-        # Configurar una etiqueta con información de prueba
+        # Configurar una etiqueta con informacion de prueba
         self.label15.configure(text=(Salida, "SI se debe modificar"))
 
         # Valor para verificar el cobro (valor de ejemplo)
@@ -730,9 +731,9 @@ class FormularioOperacion:
 
     def CalculaPromocion(self, event):
         """
-        Esta función se encarga de aplicar una promoción al boleto seleccionado.
+        Esta funcion se encarga de aplicar una promocion al boleto seleccionado.
 
-        :param event: Evento que activa la función.
+        :param event: Evento que activa la funcion.
 
         :return: None
         """
@@ -746,28 +747,28 @@ class FormularioOperacion:
             self.entrypromo.focus()
             return
 
-        # Valida que solo se pueda aplicar una promoción por boleto
+        # Valida que solo se pueda aplicar una promocion por boleto
         if TarifaPreferente not in ["Normal", "Danado"]:
-            mb.showerror("Error", "Solo se puede aplicar una promoción por boleto")
+            mb.showerror("Error", "Solo se puede aplicar una promocion por boleto")
             self.promo.set('')
             self.entrypromo.focus()
             return
 
-        # Obtiene el tipo de promoción
+        # Obtiene el tipo de promocion
         QRPromo = self.promo.get()
 
-        # Obtiene las primeras 8 letras de la promoción (se asume que son suficientes para identificar el tipo de promoción)
+        # Obtiene las primeras 8 letras de la promocion (se asume que son suficientes para identificar el tipo de promocion)
         TipoPromo = QRPromo[:8]
 
-        # Verifica si la promoción es conocida en el diccionario PROMOCIONES
+        # Verifica si la promocion es conocida en el diccionario PROMOCIONES
         if TipoPromo not in PROMOCIONES:
-            mb.showwarning("IMPORTANTE", "Promoción desconocida, escanee nuevamente el QR de promoción")
+            mb.showwarning("IMPORTANTE", "Promocion desconocida, escanee nuevamente el QR de promocion")
             self.promo.set('')
             self.promo_auxiliar.set('')
             self.entrypromo.focus()
             return
 
-        # Valida si la promoción ya fue aplicada previamente
+        # Valida si la promocion ya fue aplicada previamente
         respuesta = self.DB.ValidaPromo(QRPromo)
 
         if len(respuesta) > 0:
@@ -781,7 +782,7 @@ class FormularioOperacion:
         # Obtiene el importe actual
         importe = int(self.importe.get())
 
-        # Aplica diferentes descuentos según el tipo de promoción
+        # Aplica diferentes descuentos según el tipo de promocion
         if TipoPromo==("EV ANUIE") or TipoPromo==("ev anuie"):
 
             if self.horas_dentro <= 8 and self.minutos_dentro < 1:
@@ -829,11 +830,11 @@ class FormularioOperacion:
 
         #     text_promo = "CENEVAL"
 
-        # Añade "Danado" a la descripción de la promoción si el boleto está marcado como "Danado"
+        # Añade "Danado" a la descripcion de la promocion si el boleto está marcado como "Danado"
         if TarifaPreferente == "Danado":
             text_promo = text_promo + TarifaPreferente
 
-        # Establece el tipo de promoción y muestra el importe actualizado
+        # Establece el tipo de promocion y muestra el importe actualizado
         self.TarifaPreferente.set(text_promo)
         self.promo.set("")
         self.mostrar_importe(importe)
@@ -845,7 +846,7 @@ class FormularioOperacion:
     ###################### Fin de Pagina2 Inicio Pagina3 ###############################
     def listado_completo(self):
         self.pagina3 = ttk.Frame(self.cuaderno1)
-        self.cuaderno1.add(self.pagina3, text="Módulo de Corte")
+        self.cuaderno1.add(self.pagina3, text="Modulo de Corte")
         self.labelframe1=ttk.LabelFrame(self.pagina3, text="Autos")
         self.labelframe1.grid(column=0, row=0, padx=1, pady=1)
         self.labelframe2=ttk.LabelFrame(self.pagina3, text="Generar Corte")
@@ -1013,11 +1014,11 @@ class FormularioOperacion:
 
     def BoletoCancelado(self):
         """
-        Esta función cancela un boleto específico.
+        Esta funcion cancela un boleto específico.
 
-        Verifica si se ha ingresado un número de folio para cancelar y muestra una advertencia para confirmar la cancelación.
-        Si se confirma la cancelación, obtiene los datos del boleto cancelado y realiza las operaciones correspondientes.
-        Muestra información relevante del boleto cancelado y guarda el registro del cobro cancelado.
+        Verifica si se ha ingresado un número de folio para cancelar y muestra una advertencia para confirmar la cancelacion.
+        Si se confirma la cancelacion, obtiene los datos del boleto cancelado y realiza las operaciones correspondientes.
+        Muestra informacion relevante del boleto cancelado y guarda el registro del cobro cancelado.
 
         :param self: Objeto de la clase que contiene los atributos y métodos necesarios.
 
@@ -1045,7 +1046,7 @@ class FormularioOperacion:
         if len(respuesta) == 0:
             self.fecha_entrada.set('')
             self.fecha_salida.set('')
-            mb.showinfo("Información", "No existe un auto con dicho código")
+            mb.showinfo("Informacion", "No existe un auto con dicho codigo")
             return
 
         Salida = respuesta[0][1]
@@ -1058,7 +1059,7 @@ class FormularioOperacion:
             return
 
         if Placas == "BoletoPerdido":
-            mb.showerror("Error", "El folio ingresado corresponde a una reposición de un boleto perdido, no se puede cancelar.")
+            mb.showerror("Error", "El folio ingresado corresponde a una reposicion de un boleto perdido, no se puede cancelar.")
             self.FolioCancelado.set("")
             self.folio.set("")
             return
@@ -1303,7 +1304,7 @@ class FormularioOperacion:
 
         # Si hay boletos perdidos generados, cobrados o no cobrados, se procede a imprimir el reporte
         if Boletos_perdidos_generados > 0 or Boletos_perdidos_cobrados > 0 or Boletos_perdidos_no_cobrados > 0:
-            # Imprime el encabezado de la sección de boletos perdidos
+            # Imprime el encabezado de la seccion de boletos perdidos
             p.text("BOLETOS PERDIDOS"+'\n\n')
 
             # Imprime la cantidad de boletos perdidos generados y su desglose
@@ -1333,7 +1334,7 @@ class FormularioOperacion:
         # Obtiene la cantidad e importes de las pensiones para el corte actual
         respuesta = self.DB.total_pensionados_corte(Numcorte)
 
-        # Si hay pensionados en el corte, se procede a imprimir la sección correspondiente
+        # Si hay pensionados en el corte, se procede a imprimir la seccion correspondiente
         if len(respuesta) > 0:
             p.text("Cantidad e Importes Pensiones" + '\n')
             p.text("Cuantos - Concepto - ImporteTotal " + '\n')
@@ -1713,9 +1714,9 @@ class FormularioOperacion:
 
     
     def ConsulPagoPen(self):
-        """Consulta la información de un pensionado y muestra los detalles del pago.
+        """Consulta la informacion de un pensionado y muestra los detalles del pago.
         
-        Obtiene la información del pensionado asociado al número de tarjeta ingresado,
+        Obtiene la informacion del pensionado asociado al número de tarjeta ingresado,
         calcula el monto a pagar y muestra los detalles del pago en la interfaz gráfica.
 
         Returns:
@@ -1739,7 +1740,7 @@ class FormularioOperacion:
         respuesta = self.DB.ConsultaPensionado(resultado)
 
         if not respuesta:
-            mb.showwarning("IMPORTANTE", "No se encontró información para el cliente")
+            mb.showwarning("IMPORTANTE", "No se encontro informacion para el cliente")
             return
 
         cliente = respuesta[0]
@@ -1759,10 +1760,10 @@ class FormularioOperacion:
         if cortesia == "Si":
             self.etiqueta_informacion.configure(text="El Pensionado cuenta con Cortesía")
 
-        # Lógica para determinar el pago según el estatus del pensionado
+        # Logica para determinar el pago según el estatus del pensionado
         # y mostrar mensajes informativos
         if Estatus == "Inactiva":
-            # Cálculo del pago con penalización para estatus Inactiva
+            # Cálculo del pago con penalizacion para estatus Inactiva
             pago = self.calcular_pago_media_pension(monto)
             total = pago + valor_tarjeta
             self.etiqueta_informacion.configure(text="Tarjeta desactivada")
@@ -1770,12 +1771,12 @@ class FormularioOperacion:
             pago = total
 
         elif Estatus == "InactivaPerm":
-            # Cálculo del pago con penalización para estatus InactivaPerm
+            # Cálculo del pago con penalizacion para estatus InactivaPerm
             pago_mensualidad = monto * nummes
             total = pago_mensualidad + valor_tarjeta
 
             self.etiqueta_informacion.configure(text="Tarjeta desactivada de forma permanente")
-            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada de forma permanente, por lo que el pensionado pagará una penalización correspondiente al precio de la tarjeta ademas de su respectiva mensualidad.\n\nPago pension: {pago_mensualidad}\nPenalización:    {valor_tarjeta}\nPago total:        {total}")
+            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada de forma permanente, por lo que el pensionado pagará una penalizacion correspondiente al precio de la tarjeta ademas de su respectiva mensualidad.\n\nPago pension: {pago_mensualidad}\nPenalizacion:    {valor_tarjeta}\nPago total:        {total}")
             pago = total
 
         elif Estatus == "InactivaTemp":
@@ -1786,8 +1787,8 @@ class FormularioOperacion:
             pago = pago_mensualidad
 
         elif Estatus == "Reposicion":
-            self.etiqueta_informacion.configure(text="Tarjeta de reposición")
-            mb.showwarning("IMPORTANTE", "La tarjeta es de reposición por lo que el pensionado solo pagará dicho valor")
+            self.etiqueta_informacion.configure(text="Tarjeta de reposicion")
+            mb.showwarning("IMPORTANTE", "La tarjeta es de reposicion por lo que el pensionado solo pagará dicho valor")
             pago = valor_reposiion_tarjeta
 
         elif VigAct != None:
@@ -1812,7 +1813,7 @@ class FormularioOperacion:
                     penalizacion_diaria=penalizacion_diaria_pension,
                     fecha_limite=limite)
 
-                mb.showwarning("IMPORTANTE", f"Vigencia Vencida por {dias_atrasados} días, se aplicará una penalización de ${penalizacion_pension}.00 sumado a su pago de pensión.")
+                mb.showwarning("IMPORTANTE", f"Vigencia Vencida por {dias_atrasados} días, se aplicará una penalizacion de ${penalizacion_pension}.00 sumado a su pago de pension.")
                 self.caja_texto_numero_tarjeta.focus()
 
             pago = (monto * nummes) + penalizacion_pension
@@ -1822,10 +1823,10 @@ class FormularioOperacion:
 
 
     def Cobro_Pensionado(self):
-        """Realiza el cobro de la pensión al pensionado y actualiza su información en la base de datos.
+        """Realiza el cobro de la pension al pensionado y actualiza su informacion en la base de datos.
 
-        Realiza el cobro correspondiente a la pensión del pensionado según su estado,
-        tipo de pensión y forma de pago seleccionada. Actualiza la información del pensionado
+        Realiza el cobro correspondiente a la pension del pensionado según su estado,
+        tipo de pension y forma de pago seleccionada. Actualiza la informacion del pensionado
         en la base de datos con los nuevos datos de vigencia y estatus. Además, imprime un comprobante
         de pago y muestra mensajes informativos.
 
@@ -1860,7 +1861,7 @@ class FormularioOperacion:
             respuesta = self.DB.ConsultaPensionado(Existe)
 
             if not respuesta:
-                mb.showwarning("IMPORTANTE", "No se encontró información para el cliente")
+                mb.showwarning("IMPORTANTE", "No se encontro informacion para el cliente")
                 return
 
             cliente = respuesta[0]
@@ -1981,33 +1982,33 @@ class FormularioOperacion:
                                             monto: float,
                                             usuario: str,
                                             tipo_pago: str) -> None:
-        """Imprime un comprobante de pago de una pensión.
+        """Imprime un comprobante de pago de una pension.
         Args:
             numero_tarjeta (str): El número de tarjeta del pensionado.
             Nom_cliente (str): El nombre del pensionado.
             Apell1_cliente (str): El primer apellido del pensionado.
             Apell2_cliente (str): El segundo apellido del pensionado.
             fecha_pago (str): La fecha en que se hizo el pago.
-            vigencia (str): La fecha de vigencia de la pensión.
-            monto (float): El monto que se pagó.
+            vigencia (str): La fecha de vigencia de la pension.
+            monto (float): El monto que se pago.
             usuario (str): Nombre del usuario en turno.
             tipo_pago (str): Tipo de pago.
         Returns:
-            None: Esta función no devuelve nada, simplemente imprime un comprobante.
+            None: Esta funcion no devuelve nada, simplemente imprime un comprobante.
         Raises:
             None
         """
-        # Establece la alineación del texto al centro
+        # Establece la alineacion del texto al centro
         p.set(align="center")
 
         p.text("----------------------------------\n")
         # Agrega un encabezado al comprobante
         p.text("        Comprobante de pago\n\n")
         
-        # Establece la alineación del texto a la izquierda
+        # Establece la alineacion del texto a la izquierda
         p.set(align="left")
 
-        # Agrega información sobre el pago al comprobante
+        # Agrega informacion sobre el pago al comprobante
         p.image(logo_1)
         p.text(f"Numero de tarjeta: {numero_tarjeta}\n")
         p.text(f"Nombre: {Nom_cliente}\n")
@@ -2021,7 +2022,7 @@ class FormularioOperacion:
 
         p.text("----------------------------------\n")
 
-        # Corta el papel para finalizar la impresión
+        # Corta el papel para finalizar la impresion
         p.cut()
 
     def cambiar_valor(self, contrario):
@@ -2123,10 +2124,10 @@ class FormularioOperacion:
 
     def BoletoDañado(self):
         """
-        Esta función se encarga de manejar el cobro de un boleto dañado.
+        Esta funcion se encarga de manejar el cobro de un boleto dañado.
 
         Verifica si se ha ingresado un número de folio para el boleto dañado y realiza las operaciones correspondientes.
-        Muestra información relevante del boleto dañado y establece el tipo de pago como "Danado".
+        Muestra informacion relevante del boleto dañado y establece el tipo de pago como "Danado".
 
         :param self: Objeto de la clase que contiene los atributos y métodos necesarios.
 
@@ -2147,7 +2148,7 @@ class FormularioOperacion:
         respuesta = self.DB.consulta(datos)
         if len(respuesta) == 0:
             self.limpiar_campos()
-            mb.showinfo("Información", "No existe un auto con dicho código")
+            mb.showinfo("Informacion", "No existe un auto con dicho codigo")
             self.entryPonerFOLIO.focus()
             return
 
@@ -2178,13 +2179,13 @@ class FormularioOperacion:
 
 
     def desactivar_botones(self):
-        """Esta función deshabilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
+        """Esta funcion deshabilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
         self.boton_agregar_pensionado.configure(state='disabled')
         self.boton_modificar_pensionado.configure(state='disabled')
 
 
     def activar_botones(self):
-        """Esta función habilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
+        """Esta funcion habilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
         self.boton_agregar_pensionado.configure(state='normal')
         self.boton_modificar_pensionado.configure(state='normal')
 
@@ -2192,7 +2193,7 @@ class FormularioOperacion:
     def limpiar_campos(self):
         """Limpia los campos y reinicia los valores de los atributos relacionados con la interfaz gráfica.
 
-        Esta función reinicia los valores de varios atributos de la interfaz gráfica a su estado inicial,
+        Esta funcion reinicia los valores de varios atributos de la interfaz gráfica a su estado inicial,
         lo que implica limpiar campos de entrada de texto y etiquetas, y establecer valores por defecto en algunos atributos.
         """
         # Reinicia los valores de varios atributos
@@ -2219,7 +2220,7 @@ class FormularioOperacion:
     def vaciar_tabla(self):
         """Vacía la tabla de datos.
 
-        Esta función elimina todas las filas de la tabla que muestra los datos de pensionados en la interfaz gráfica.
+        Esta funcion elimina todas las filas de la tabla que muestra los datos de pensionados en la interfaz gráfica.
         """
         # Elimina todas las filas de la tabla
         self.tabla.delete(*self.tabla.get_children())
@@ -2247,7 +2248,7 @@ class FormularioOperacion:
         """
         Obtiene y muestra todos los pensionados en la tabla.
 
-        Esta función obtiene todos los registros de pensionados desde la base de datos y luego los muestra
+        Esta funcion obtiene todos los registros de pensionados desde la base de datos y luego los muestra
         en la tabla de la interfaz gráfica.
         """
         self.registros = self.controlador_crud_pensionados.ver_pensionados()
@@ -2262,7 +2263,7 @@ class FormularioOperacion:
         """
         Abre la ventana para agregar un nuevo pensionado.
 
-        Esta función desactiva los botones, verifica la contraseña, y luego abre la ventana para agregar un nuevo pensionado.
+        Esta funcion desactiva los botones, verifica la contraseña, y luego abre la ventana para agregar un nuevo pensionado.
         """
         self.desactivar_botones()
         contraseña = self.variable_contraseña_pensionados.get()
@@ -2294,7 +2295,7 @@ class FormularioOperacion:
         """
         Abre la ventana para modificar los datos de un pensionado existente.
 
-        Esta función desactiva los botones, verifica la contraseña y el número de tarjeta del pensionado,
+        Esta funcion desactiva los botones, verifica la contraseña y el número de tarjeta del pensionado,
         y luego abre la ventana para modificar los datos del pensionado existente.
         """
         self.desactivar_botones()
@@ -2343,7 +2344,7 @@ class FormularioOperacion:
         """
         Limpia y reinicia los datos relacionados con el pago de pensiones en la interfaz gráfica.
 
-        Esta función reinicia los valores y la información mostrada en la interfaz gráfica
+        Esta funcion reinicia los valores y la informacion mostrada en la interfaz gráfica
         relacionados con el pago de pensiones.
         """
         self.etiqueta_informacion.configure(text="")
@@ -2361,11 +2362,11 @@ class FormularioOperacion:
 
     def calcular_pago_media_pension(self, monto):
         """
-        Calcula el pago de media pensión para un pensionado según el monto de la pensión.
+        Calcula el pago de media pension para un pensionado según el monto de la pension.
 
-        :param monto: (float) Monto de la pensión.
+        :param monto: (float) Monto de la pension.
 
-        :return: (int) El pago de media pensión.
+        :return: (int) El pago de media pension.
         """
         mes_actual = date.today().month
         año_actual = date.today().year
@@ -2381,12 +2382,12 @@ class FormularioOperacion:
 
     def calcular_penalizacion_diaria(self, penalizacion_diaria, fecha_limite):
         """
-        Calcula la penalización diaria basada en la diferencia de días entre la fecha límite y la fecha actual.
+        Calcula la penalizacion diaria basada en la diferencia de días entre la fecha límite y la fecha actual.
 
-        :param penalizacion_diaria: (float) La cantidad de penalización por cada día de atraso.
+        :param penalizacion_diaria: (float) La cantidad de penalizacion por cada día de atraso.
         :param fecha_limite: (str or datetime) La fecha límite en formato "%Y-%m-%d %H:%M:%S".
 
-        :return: (tuple) Una tupla que contiene la penalización total a pagar por los días de atraso y el número de días atrasados.
+        :return: (tuple) Una tupla que contiene la penalizacion total a pagar por los días de atraso y el número de días atrasados.
         """
 
         # Obtener la fecha y hora actual en formato deseado
@@ -2406,7 +2407,7 @@ class FormularioOperacion:
         dias_atrasados = fecha_atrasada.days + 1  # Se suma 1 día para corregir fecha
         #if dias_atrasados == 0:dias_atrasados = 1
 
-        # Calcular la penalización total
+        # Calcular la penalizacion total
         penalizacion = dias_atrasados * penalizacion_diaria
 
         return penalizacion, dias_atrasados
@@ -2416,7 +2417,7 @@ class FormularioOperacion:
         """
         Muestra las tarjetas vencidas en una ventana aparte.
 
-        Esta función obtiene las tarjetas vencidas desde la base de datos, las muestra en una ventana aparte
+        Esta funcion obtiene las tarjetas vencidas desde la base de datos, las muestra en una ventana aparte
         y luego desactiva las tarjetas vencidas en la base de datos.
         """
         tarjetas_expiradas = self.controlador_crud_pensionados.ver_tarjetas_expiradas()
@@ -2433,13 +2434,13 @@ class FormularioOperacion:
 
         :param datos: (list) Una lista de tuplas con los datos de las tarjetas vencidas.
 
-        Esta función muestra una ventana con una tabla que contiene los datos de las tarjetas vencidas
+        Esta funcion muestra una ventana con una tabla que contiene los datos de las tarjetas vencidas
         obtenidos desde la base de datos.
         """
         ventana = tk.Toplevel()
         ventana.title("Tarjetas vencidas")
 
-        # Se elimina la funcionalidad del botón de cerrar
+        # Se elimina la funcionalidad del boton de cerrar
         ventana.protocol("WM_DELETE_WINDOW", lambda: cerrar_ventana())
 
         # Deshabilita los botones de minimizar y maximizar
@@ -2490,7 +2491,7 @@ class FormularioOperacion:
             self.ver_pensionados()
             ventana.destroy()
 
-        # Agregar botón "Aceptar" en color rojo centrado debajo de la tabla
+        # Agregar boton "Aceptar" en color rojo centrado debajo de la tabla
         btn_aceptar = tk.Button(ventana, text="Aceptar", bg="red", command=cerrar_ventana, font=("Arial", 14))
         btn_aceptar.pack(side=tk.BOTTOM, pady=10)
 
@@ -2503,7 +2504,7 @@ class FormularioOperacion:
         ancho_pantalla = ventana.winfo_screenwidth()
         alto_pantalla = ventana.winfo_screenheight()
 
-        # Calcular la posición de la ventana secundaria para que quede en el centro de la pantalla
+        # Calcular la posicion de la ventana secundaria para que quede en el centro de la pantalla
         x = self.ventana1.winfo_x() + (ancho_ventana_principal - ventana.winfo_width()) // 2
         y = self.ventana1.winfo_y() + (alto_ventana_principal - ventana.winfo_height()) // 2
 
@@ -2524,7 +2525,7 @@ class FormularioOperacion:
 
         :param text_importe: (str) El importe a mostrar.
 
-        Esta función muestra el importe en la interfaz gráfica, actualizando el valor en la etiqueta correspondiente.
+        Esta funcion muestra el importe en la interfaz gráfica, actualizando el valor en la etiqueta correspondiente.
         """
         self.importe.set(text_importe)
         self.IImporte.config(text=self.importe.get())
