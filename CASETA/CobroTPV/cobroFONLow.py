@@ -670,6 +670,9 @@ class FormularioOperacion:
                 TiempoTotal = valor
 
             if imagen_logo:
+                imgqr = (Salida + Folio)
+                self.DB.generar_QR(imgqr)
+
                 # Imprimir el logo si está habilitado
                 p.image(logo_1)
                 print("Imprime logo")
