@@ -2,7 +2,7 @@
 from datetime import datetime, date, time, timedelta
 formato = "%H:%M:%S"
 from escpos.printer import *
-import qrcode
+# import qrcode
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as mb
@@ -325,14 +325,14 @@ class FormularioOperacion:
         fSTR=str(fechaEntro)
         imgqr=(fSTR + masuno)
         #img = qrcode.make(fechaEntro)
-        img = qrcode.make(imgqr)
+        # img = qrcode.make(imgqr)
         # Obtener imagen con el tamaño indicado
-        reducida = img #.resize((100, 25))
+        # reducida = img #.resize((100, 25))
         # Mostrar imagen reducida.show()
         # Guardar imagen obtenida con el formato JPEG
-        reducida.save("reducida.png")
+        # reducida.save("reducida.png")
         f = open("reducida.png", "wb")
-        img.save(f)
+        # img.save(f)
         f.close()
         #reducida2 =img2.resize((100, 75))
         #reducida2.save("reducida2.png")
