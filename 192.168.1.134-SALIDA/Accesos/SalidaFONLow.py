@@ -763,7 +763,7 @@ class FormularioOperacion:
                 VigAct=fila[0]
                 Estatus=fila[1]
                 if Estatus == None:
-                    mb.showwarning("IMPORTANTE", Estatus)
+                    #mb.showwarning("IMPORTANTE", Estatus)
                     self.descripcion.set('Pensionado sin registro de Entrada')
                     self.folio.set("")
                     self.entryfolio.focus()
