@@ -44,10 +44,12 @@ PROMOCIONES = ('EV ANUIE', 'ev anuie', 'A2 ANUIS', "a2 anuis", "A1 ANUIE", "a1 a
 nombre_estacionamiento = 'Tenayuca'
 
 from controller_email import main
+send_data = True
 
 class FormularioOperacion:
     def __init__(self):
-        atexit.register(main)
+        if send_data:
+            atexit.register(main)
 
         self.controlador_crud_pensionados = Pensionados()
         self.folio_auxiliar = None
@@ -788,8 +790,11 @@ class FormularioOperacion:
         # Aplica diferentes descuentos según el tipo de promocion
         if TipoPromo==("EV ANUIE") or TipoPromo==("ev anuie"):
 
-            if self.horas_dentro <= 8 and self.minutos_dentro < 1:
-                importe = 80
+            if self.horas_dentro <= 8:
+                if self.horas_dentro == 8 and self.minutos_dentro > 0:
+                    importe= importe - 80
+                else: 
+                    importe = 80
 
             else:# self.horas_dentro > 8:
                 importe= importe - 80
@@ -1114,28 +1119,17 @@ class FormularioOperacion:
             p.text(str(fila[3]))
             p.text('\n')
         else:
+            p.text('\n')
             p.cut()
 
     def Calcular_Corte(self):
         respuesta=self.DB.corte()
         self.ImporteCorte.set(respuesta)
         ##obtengamo la fechaFin del ultimo corte
-        ultiCort1=str(self.DB.UltimoCorte())
-        #mb.showinfo("msj uno",ultiCort1)
-        startLoc = 20
-        endLoc = 43
-        ultiCort1=(ultiCort1)[startLoc: endLoc]
-        ultiCort1 = ultiCort1.strip('),')
-        if len(ultiCort1) <= 19:   
+        ultiCort1=self.DB.UltimoCorte()
+        ultiCort1 = ultiCort1[0][0]
+        self.FechUCORTE.set(ultiCort1)
 
-            ultiCort1= datetime.strptime(ultiCort1, '%Y, %m, %d, %H, %M')
-        else:
-            ultiCort1= datetime.strptime(ultiCort1, '%Y, %m, %d, %H, %M, %S')
-
-        ultiCort1 = datetime.strftime(ultiCort1, '%Y/%m/%d/%H/%M/%S')
-        ultiCort1 = datetime.strptime(ultiCort1, '%Y/%m/%d/%H/%M/%S')
-        self.FechUCORTE.set(ultiCort1)# donde el label no esta bloqueada
-        ###ahora obtenemos la fecha del corte ha realizar
         fecha = datetime.today()
         fecha1= fecha.strftime("%Y-%m-%d %H:%M:%S")
         fechaActual= datetime.strptime(fecha1, '%Y-%m-%d %H:%M:%S')
