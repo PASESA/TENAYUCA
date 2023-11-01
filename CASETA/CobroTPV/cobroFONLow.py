@@ -22,8 +22,10 @@ from view_modificar_pensionado import View_modificar_pensionados
 import traceback
 import math
 
-import atexit
-
+from atexit import register
+from reloj import RelojAnalogico
+from time import sleep
+from controller_email import main
 ###--###
 penalizacion_con_importe = False
 data_rinter = (0x04b8, 0x0e15, 0)
@@ -53,12 +55,14 @@ button_color = "#062546"#"#39acec""#6264d4"
 button_letters_color = "white" 
 
 from controller_email import main
+
+show_clock = False
 send_data = True
 
 class FormularioOperacion:
     def __init__(self):
         if send_data:
-            atexit.register(main)
+            register(main)
 
         self.controlador_crud_pensionados = Pensionados()
         self.folio_auxiliar = None
@@ -72,7 +76,7 @@ class FormularioOperacion:
         screen_height = self.root.winfo_screenheight()
 
         # Configura la ventana para que ocupe toda la pantalla
-        self.root.geometry(f"{screen_width}x{screen_height}")
+        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
 
         # Colocar el LabelFrame en las coordenadas calculadas
         principal = tk.LabelFrame(self.root)
@@ -89,6 +93,9 @@ class FormularioOperacion:
         self.listado_completo()
         self.interface_pensionados()
         self.cuaderno1.grid(column=0, row=0, padx=2, pady=5)
+        if show_clock:
+            self.reloj = RelojAnalogico()
+
         self.root.mainloop()
         ###########################Inicia Pagina1##########################
 
@@ -200,11 +207,11 @@ class FormularioOperacion:
 
         printer.image(logo_1)
         printer.text("--------------------------------------\n")
+        printer.set(align="center")
         printer.text("BOLETO DE ENTRADA\n")
         printer.text('Entro: '+horaentrada[:-3]+'\n')
         printer.text('Placas '+placa+'\n')
-        printer.text(f'000{folio_boleto}\n')
-        printer.image(AutoA)
+        printer.text(f'Folio 000{folio_boleto}\n')
 
         printer.set(align = "center")
         printer.image(qr_imagen)
@@ -458,6 +465,9 @@ class FormularioOperacion:
             self.promo.set("")
             self.PonerFOLIO.set("")
 
+            if show_clock:
+                self.reloj.update_data(self.TarifaPreferente.get(), importe)
+
         else:
             # Limpiar campos y mostrar mensaje de error
             self.limpiar_campos()
@@ -501,7 +511,7 @@ class FormularioOperacion:
         printer.text("BOLETO DE ENTRADA\n")
         printer.text('Entro: '+horaentrada[:-3]+'\n')
         printer.text('Placas '+placa+'\n')
-        printer.text(f'000{folio_boleto}\n')
+        printer.text(f'Folio 000{folio_boleto}\n')
         printer.set(align = "center")
         printer.text("B O L E T O  P E R D I D O\n")
         printer.text("--------------------------------------\n")
@@ -641,6 +651,7 @@ class FormularioOperacion:
         self.TiempoTotal_auxiliar.set(self.TiempoTotal.get()[:-3])
 
         # Calcula la tarifa y el importe a pagar
+        minutos = 0
         if self.minutos_dentro == 0:
             minutos = 0
         elif self.minutos_dentro < 16 and self.minutos_dentro >= 1:
@@ -654,6 +665,7 @@ class FormularioOperacion:
 
         importe = 0
 
+
         if self.dias_dentro == 0 and self.horas_dentro == 0:
             # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 25 unidades
             importe = 25
@@ -666,11 +678,25 @@ class FormularioOperacion:
 
 
         importe = importe + (self.dias_dentro * 600)
+
         # Establecer el importe y mostrarlo
         self.mostrar_importe(importe)
 
         # Coloca el foco en el campo entrypromo
         self.entrypromo.focus()
+
+        if show_clock:
+            self.reloj.set_time(
+                entrada=str(Entrada),
+                salida=str(Salida),
+                days = self.dias_dentro,
+                hour= self.horas_dentro,
+                minute= self.minutos_dentro,
+                seconds= segundos_vividos,
+                importe=importe)
+
+            # Espera un segundo para que de tiempo a cargar la animacion
+            sleep(0.5)
 
     def calcular_cambio(self):
         folio = self.folio.get()
@@ -1890,7 +1916,7 @@ class FormularioOperacion:
         Estatus = cliente[14]
         monto = cliente[15]
         cortesia = cliente[16]
-        tolerancia = int(cliente[17])
+        Tolerancia = int(cliente[17])
 
         self.Monto.set(monto)
         self.Vigencia.set(VigAct)
@@ -1950,7 +1976,7 @@ class FormularioOperacion:
             # Convertir la cadena de caracteres en un objeto datetime
             hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
 
-            limite = VigAct + timedelta(days=tolerancia)
+            limite = self.get_date_limit(VigAct, Tolerancia)
             print(f"limite: {limite}")
 
             penalizacion_pension = 0
@@ -2058,7 +2084,7 @@ class FormularioOperacion:
                 hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
 
                 limite = self.get_date_limit(VigAct, Tolerancia)
-                print(limite)
+                print(f"limite: {limite}")
 
                 penalizacion_pension = 0
 
@@ -2377,6 +2403,8 @@ class FormularioOperacion:
         self.entryfolio.focus()
         self.BoletoDentro()
 
+        if show_clock:
+            self.reloj.clear_data()
 
     def vaciar_tabla(self):
         """Vacía la tabla de datos.
@@ -2694,7 +2722,7 @@ class FormularioOperacion:
 
     def get_date_limit(self, date_start:datetime, Tolerance:int) -> datetime:
         """
-        Calcula la fecha límite a partir de una fecha de inicio y una cantidad de días de tolerancia.
+        Calcula la fecha límite a partir de una fecha de inicio y una cantidad de días de Tolerancia.
 
         :param date_start (datetime): Fecha de inicio.
         :param Tolerance (int): Cantidad de días laborables a agregar.

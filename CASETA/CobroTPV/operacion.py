@@ -221,7 +221,7 @@ class Operacion:
     def GuarCorte(self, datos):
         cone=self.abrir()
         cursor=cone.cursor()
-        sql="insert into Cortes(Importe, FechaIni, FechaFin,Quedados,idInicial,NumBolQued) values (%s,%s,%s,%s,%s,%s)"
+        sql="insert into Cortes(Importe, FechaIni, FechaFin,Quedados,idInicial,NumBolQued, Pensionados_Quedados) values (%s,%s,%s,%s,%s,%s,%s)"
         #sql = "update Entradas set CorteInc = 1 WHERE Importe > 0"
         cursor.execute(sql,datos)
         cone.commit()
