@@ -258,7 +258,7 @@ class Operacion:
     def MovsPensionado(self, datos):
         cone=self.abrir()
         cursor=cone.cursor()
-        sql="INSERT INTO MovimientosPens(idcliente, num_tarjeta, Entrada, Estatus) values (%s,%s,%s,%s)"
+        sql="INSERT INTO MovimientosPens(idcliente, num_tarjeta, Entrada, Estatus, Corte) values (%s,%s,%s,%s,%s)"
         cursor.execute(sql,datos)
         cone.commit()
         cone.close()

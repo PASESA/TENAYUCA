@@ -1,4 +1,3 @@
-#! /usr/bin/python3
 from datetime import datetime, date
 from tkinter import messagebox as mb
 from tkinter import *
@@ -22,6 +21,7 @@ class Fullscreen_Example:
         self.Nombre=tk.StringVar()
         self.entryNombre=tk.Entry(self.labelframe1, width=10, textvariable=self.Nombre)#, state="readonly")
         self.entryNombre.grid(column=1, row=0, padx=4, pady=4)
+        self.entryNombre.focus()
         self.Contraseña=tk.StringVar()
         self.entryContraseña=tk.Entry(self.labelframe1, width=10, textvariable=self.Contraseña, show=
         "*", justify=tk.RIGHT)
@@ -77,7 +77,7 @@ class Fullscreen_Example:
                     self.quitF()
                     from cobroFONLow import FormularioOperacion       
                     FormularioOperacion()
-                    
+
 
                 else:
                     mb.showwarning("IMPORTANTE", "La Contraseña no coincide, volver a capturarla")

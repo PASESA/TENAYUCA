@@ -1,3 +1,6 @@
+import qrcode
+from escpos.printer import Usb, USBNotFoundError
+
 from tkinter import messagebox as mb
 import tkinter as tk
 from tkinter import ttk
@@ -8,8 +11,9 @@ import traceback
 
 class View_agregar_pensionados:
     """Clase de la vista para agregar pensionados."""
-    def __init__(self):
+    def __init__(self, nombre_estacionamiento:str):
         """Inicializa una instancia de la clase ViewAgregarPensionados y crea la ventana principal de la interfaz."""
+        self.nombre_estacionamiento = nombre_estacionamiento
         self.query = Pensionados()
 
         # Crea la ventana principal
@@ -18,13 +22,14 @@ class View_agregar_pensionados:
         # Se elimina la funcionalidad del botón de cerrar
         self.panel_crud.protocol("WM_DELETE_WINDOW", lambda: self.desconectar())
 
-        self.panel_crud.title(f'Agregar pensionado')
+        self.panel_crud.title(f'Agregar pensionado - {self.nombre_estacionamiento}')
 
         # Configura la columna principal del panel para que use todo el espacio disponible
         self.panel_crud.columnconfigure(0, weight=1)
 
         # Crea las variables para los datos del pensionado
         self.variable_numero_tarjeta = StringVar()
+
         self.variable_nombre = StringVar()
         self.variable_apellido_1 = StringVar()
         self.variable_apellido_2 = StringVar()
@@ -173,7 +178,6 @@ class View_agregar_pensionados:
         seccion_datos_pension = tk.LabelFrame(seccion_derecha, text="Datos de la pension")
         seccion_datos_pension.grid(row=1, column=0,padx=5, pady=5, sticky=tk.NW)
 
-
         etiqueta_monto_dato_pension = ttk.Label(seccion_datos_pension, text='Monto X Mes: ')
         etiqueta_monto_dato_pension.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NW)
         self.campo_monto_dato_pension = ttk.Entry(seccion_datos_pension, textvariable=self.variable_monto)
@@ -288,4 +292,4 @@ class View_agregar_pensionados:
         self.panel_crud.quit()
         self.panel_crud.destroy()
 
-#ViewAgregarPensionados()
+# View_agregar_pensionados()

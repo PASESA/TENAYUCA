@@ -185,7 +185,7 @@ class Pensionados(Usuarios):
         :return: (list) Una lista con los datos del pensionado consultado.
         """
         if self.connection:
-            query = f"SELECT Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Fecha_vigencia, Vigencia FROM Pensionados WHERE Num_tarjeta = {Num_tarjeta}"
+            query = f"SELECT Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Fecha_vigencia, Vigencia FROM Pensionados WHERE Num_tarjeta = '{Num_tarjeta}'"
 
             # Se ejecuta la consulta y se obtiene el resultado.
             resultado = self.execute_query(query)
@@ -260,4 +260,55 @@ class Pensionados(Usuarios):
         resultado = self.execute_query(query)
 
         return resultado
+
+
+    def get_Entradas_Totales_Pensionados(self, folio):
+
+        query =f"""SELECT COUNT(*) AS Entradas_Totales_Pensionados FROM MovimientosPens p INNER JOIN Cortes c ON p.Entrada BETWEEN c.FechaIni AND c.FechaFin WHERE c.Folio = {folio};"""
+
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        return resultado[0][0]
+
+    def get_Salidas_Pensionados(self, corte):
+
+        query =f"""SELECT COUNT(*) AS Salidas_Pensionados FROM MovimientosPens WHERE Estatus = "Afuera" AND Salida BETWEEN (SELECT FechaIni from Cortes WHERE Folio = {corte}) AND (SELECT FechaFin from Cortes WHERE Folio = {corte}) AND Corte = {corte};"""
+
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        return resultado[0][0]
+
+    def get_Quedados_Pensionados(self):
+
+        query =f"""SELECT COUNT(*) AS Quedados_Pensionados FROM MovimientosPens WHERE Estatus = "Adentro" AND Corte = 0;"""   
+
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        return resultado[0][0]
+
+    def Actualizar_Entradas_Pension(self, corte):
+
+        query = f"update MovimientosPens set Corte = {corte} where Corte = 0 AND Salida BETWEEN (SELECT FechaIni from Cortes WHERE Folio = {corte}) AND (SELECT FechaFin from Cortes WHERE Folio = {corte});"
+        self.execute_query(query)
+
+    def get_Anteriores_Pensionados(self, corte):
+        query =f"""SELECT COALESCE(Pensionados_Quedados, 0) FROM Cortes WHERE Folio = {corte};"""   
+
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        return resultado[0][0]
+
+    def get_QR_id(self):
+        query =f"""SELECT COALESCE(MAX(Id_cliente), 0) FROM Pensionados;"""
+
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        ID = resultado[0][0] + 1
+
+        return ID
 

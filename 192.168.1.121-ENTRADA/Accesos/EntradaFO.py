@@ -311,7 +311,7 @@ class FormularioOperacion:
                 # Convertir la cadena de caracteres en un objeto datetime
                 hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
 
-                limite = VigAct + timedelta(days=Tolerancia)
+                limite = self.get_date_limit(VigAct, Tolerancia)
                 print(limite)
 
 
@@ -324,7 +324,7 @@ class FormularioOperacion:
 
                 else:
                     Entrada=datetime.today()
-                    datos=(Existe, tarjeta, Entrada, 'Adentro')
+                    datos=(Existe, tarjeta, Entrada, 'Adentro', 0)
                     datos1=('Adentro', Vigencia, Existe)
                     #mb.showinfo("Pago de Pension",'BIENVENIDO')
                     #sql="INSERT INTO PagosPens(id_cliente, num_tarjeta, Fecha_pago, Fecha_vigencia, Mensualidad, Monto) values (%s,%s,%s,%s,%s,%s)"
@@ -338,7 +338,25 @@ class FormularioOperacion:
                     time.sleep (1)
                     io.output(barrera,0)
                     self.NumTarjeta4.set("")               
-                    self.entryNumTarjeta4.focus()        
+                    self.entryNumTarjeta4.focus() 
+       
+    def get_date_limit(self, date_start:datetime, Tolerance:int) -> datetime:
+        """
+        Calcula la fecha límite a partir de una fecha de inicio y una cantidad de días de tolerancia.
+
+        :param date_start (datetime): Fecha de inicio.
+        :param Tolerance (int): Cantidad de días laborables a agregar.
+        :return (datetime): Fecha límite después de agregar la cantidad de días laborables.
+        """
+        date_limit = date_start
+
+        while Tolerance > 0:
+            date_limit  += timedelta(days=1)
+            # Verifica si el día no es fin de semana (lunes a viernes)
+            if date_limit.weekday() < 5:
+                Tolerance -= 1
+        
+        return date_limit
 
 #########################fin de pagina1 inicio pagina2#########################
     def consulta_por_folio(self):

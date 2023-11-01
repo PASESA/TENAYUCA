@@ -1,9 +1,7 @@
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
 from tkinter import messagebox as mb
 
-PensionadoOpen=1
-
-from escpos.printer import *
+from escpos.printer import Usb, USBNotFoundError
 
 import tkinter as tk
 from tkinter import ttk
@@ -16,11 +14,6 @@ from tkinter import simpledialog
 from operacion import Operacion
 import xlsxwriter
 
-
-
-
-p = Usb(0x04b8, 0x0e15, 0)
-penalizacion_con_importe = False
 from dateutil.relativedelta import relativedelta
 from view_login import View_Login
 from queries import Pensionados
@@ -31,6 +24,10 @@ import math
 
 import atexit
 
+###--###
+penalizacion_con_importe = False
+data_rinter = (0x04b8, 0x0e15, 0)
+
 contraseña_pensionados = "P4s3"
 
 valor_tarjeta = 116
@@ -38,10 +35,22 @@ valor_reposiion_tarjeta = 232
 penalizacion_diaria_pension = 0
 
 logo_1 = "LOGO1.jpg"
+AutoA = "AutoA.png"
+
 qr_imagen = "reducida.png"
 PROMOCIONES = ('EV ANUIE', 'ev anuie', 'A2 ANUIS', "a2 anuis", "A1 ANUIE", "a1 anuie")#, 'CN CENEV')
 
-nombre_estacionamiento = 'Tenayuca'
+nombre_estacionamiento = 'Tenayuca 200'
+
+estilo = ('Arial', 12)
+font_entrada = ('Arial', 20)
+font_entrada_negritas = ('Arial', 20, 'bold')
+font_mensaje = ('Arial', 40)
+font_reloj = ('Arial', 65)
+font_cancel = ('Arial', 15)
+
+button_color = "#062546"#"#39acec""#6264d4"
+button_letters_color = "white" 
 
 from controller_email import main
 send_data = True
@@ -55,68 +64,125 @@ class FormularioOperacion:
         self.folio_auxiliar = None
 
         self.DB=Operacion()
-        self.ventana1=tk.Tk()
-        self.ventana1.title(f"{nombre_estacionamiento} COBRO")
-        self.cuaderno1 = ttk.Notebook(self.ventana1)
+        self.root=tk.Tk()
+        self.root.title(f"{nombre_estacionamiento} COBRO")
+
+        # Obtener el ancho y alto de la pantalla
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Configura la ventana para que ocupe toda la pantalla
+        self.root.geometry(f"{screen_width}x{screen_height}")
+
+        # Colocar el LabelFrame en las coordenadas calculadas
+        principal = tk.LabelFrame(self.root)
+        principal.pack(expand=True, padx=5, pady=5, anchor='n')
+
+        self.cuaderno1 = ttk.Notebook(principal)
+        # Asociar el evento <<NotebookTabChanged>> a la función on_tab_changed
+        self.cuaderno1.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+
         self.cuaderno1.config(cursor="")         # Tipo de cursor
         self.ExpedirRfid()
+        self.check_inputs()
         self.consulta_por_folio()
         self.listado_completo()
         self.interface_pensionados()
-        self.cuaderno1.grid(column=0, row=0, padx=5, pady=5)
-        self.ventana1.mainloop()
+        self.cuaderno1.grid(column=0, row=0, padx=2, pady=5)
+        self.root.mainloop()
         ###########################Inicia Pagina1##########################
 
     def ExpedirRfid(self):
-        self.pagina1 = ttk.Frame(self.cuaderno1)
-        self.cuaderno1.add(self.pagina1, text="Expedir Boleto")
-        #enmarca los controles LabelFrame
-        self.labelframe1=ttk.LabelFrame(self.pagina1, text="Dar Entrada")
-        self.labelframe1.grid(column=1, row=0, padx=0, pady=0)
-        self.Adentroframe=ttk.LabelFrame(self.pagina1, text="Autos DENTRO")
-        self.Adentroframe.grid(column=2, row=0, padx=0, pady=0)
-        self.MaxId=tk.StringVar()
-        self.entryMaxId=ttk.Entry(self.labelframe1, width=10, textvariable=self.MaxId, state="readonly")
-        self.entryMaxId.grid(column=1, row=0, padx=4, pady=4)
-        self.lbltitulo=ttk.Label(self.labelframe1, text="FOLIO")
-        self.lbltitulo.grid(column=0, row=0, padx=0, pady=0)
-        #####tomar placas del auto
+        seccion_entrada = tk.Frame(self.cuaderno1)
+        self.cuaderno1.add(seccion_entrada, text="Expedir Boleto")
+
+        seccion_entrada = tk.Frame(seccion_entrada)
+
+        seccion_entrada.grid(column=0, row=0, padx=2, pady=2, sticky=tk.NSEW)
+
+        frame_bienvenida = tk.Frame(seccion_entrada)
+        frame_bienvenida.grid(column=0, row=0, padx=2, pady=2)
+
+        frame_mensaje_bienvenida = tk.Frame(frame_bienvenida)
+        frame_mensaje_bienvenida.grid(column=0, row=0, padx=2, pady=2)
+
+        # Asegura que la fila y la columna del frame se expandan con el contenedor
+        frame_mensaje_bienvenida.grid_rowconfigure(0, weight=1)
+        frame_mensaje_bienvenida.grid_columnconfigure(0, weight=1)
+
+        label_entrada = tk.Label(frame_mensaje_bienvenida, text=f"Bienvenido(a) al estacionamiento {nombre_estacionamiento}", font=('Arial', 25), justify='center')
+        label_entrada.grid(row=0, column=0)
+
+
+
+        frame_datos_entrada = tk.Frame(seccion_entrada)
+        frame_datos_entrada.grid(column=0, row=1, padx=2, pady=2)
+
+        frame_info_cliente=tk.Frame(frame_datos_entrada)
+        frame_info_cliente.grid(column=0, row=0, padx=2, pady=2)
+
+        frame_info_placa=tk.Frame(frame_info_cliente)
+        frame_info_placa.grid(column=0, row=0, padx=2, pady=2)
+
+        label_placa=tk.Label(frame_info_placa, text="Ingrese Placa", font=('Arial', 25))
+        label_placa.grid(column=0, row=0, padx=2, pady=2)
+
         self.Placa=tk.StringVar()
-        self.entryPlaca=tk.Entry(self.labelframe1, width=10, textvariable=self.Placa)
-        self.entryPlaca.grid(column=1, row=1, padx=4, pady=4)
-        self.lblPlaca=ttk.Label(self.labelframe1, text="COLOCAR PLACAS")
-        self.lblPlaca.grid(column=0, row=1, padx=0, pady=0)
+        self.entry_placa=tk.Entry(frame_info_placa, width=20, textvariable=self.Placa, font=('Arial', 35, 'bold'), justify='center')
+        self.entry_placa.grid(column=0, row=1, padx=2, pady=2)
 
-        self.labelhr=ttk.Label(self.labelframe1, text="HORA ENTRADA")
-        self.labelhr.grid(column=0, row=2, padx=0, pady=0)
 
-        self.scrolledtext=st.ScrolledText(self.Adentroframe, width=28, height=7)
-        self.scrolledtext.grid(column=1,row=0, padx=4, pady=4)
 
-        self.boton1=tk.Button(self.labelframe1, text="Generar Entrada", command=self.agregarRegistroRFID, width=13, height=3, anchor="center", background="red")
-        self.boton1.grid(column=1, row=4, padx=4, pady=4)
-        self.Autdentro=tk.Button(self.Adentroframe, text="Boletos sin Cobro", command=self.Autdentro, width=15, height=1, anchor="center")
-        self.Autdentro.grid(column=2, row=0, padx=4, pady=4)
-        self.boton2=tk.Button(self.pagina1, text="Salir del programa", command=self.Cerrar_Programa, width=15, height=1, anchor="center", background="red")
-        self.boton2.grid(column=0, row=0, padx=4, pady=4)
+        frame_boton=tk.Frame(frame_datos_entrada)
+        frame_boton.grid(column=2, row=0, padx=2, pady=2)
 
-    def Autdentro(self): 
-        respuesta=self.DB.Autos_dentro()
-        self.scrolledtext.delete("1.0", tk.END)
-        for fila in respuesta:
-            self.scrolledtext.insert(tk.END, "Entrada num: "+str(fila[0])+"\nEntro: "+str(fila[1])[:-3]+"\n\n")
+        frame_folio = tk.Frame(frame_boton)
+        frame_folio.grid(column=0, row=0, padx=2, pady=2)
+
+        label_folio=tk.Label(frame_folio, text="Folio:", font=font_entrada)
+        label_folio.grid(column=0, row=0, padx=2, pady=2, sticky="nsew")
+        self.MaxId=tk.StringVar()
+        entryMaxId=ttk.Entry(frame_folio, width=12, textvariable=self.MaxId, state="readonly", font=font_entrada)
+        entryMaxId.grid(column=1, row=0, padx=2, pady=2, sticky=tk.NW)
+
+        boton_entrada=tk.Button(frame_boton, text="Generar Entrada", width=15, height=3, anchor="center", background=button_color, fg=button_letters_color, font=font_entrada_negritas, command=self.agregarRegistroRFID)
+        boton_entrada.grid(column=0, row=1, padx=2, pady=2)
+        
+
+        frame_info = tk.LabelFrame(seccion_entrada)#, background = '#CCC')
+        frame_info.grid(column=0, row=2, padx=2, pady=2)
+
+        self.label_informacion = tk.Label(frame_info, text="... ", width=25, font=font_mensaje, justify='center')
+        self.label_informacion.grid(column=0, row=0, padx=2, pady=2)
+
+
+
+        frame_reloj = tk.Frame(seccion_entrada)
+        frame_reloj.grid(column=0, row=3, padx=2, pady=2)
+
+        self.Reloj = tk.Label(frame_reloj, text="Reloj", background="white", font=font_reloj, justify='center')
+        self.Reloj.grid(column=0, row=0, padx=2, pady=2)
+        self.entry_placa.focus()
+
+
+    def check_inputs(self):
+        fecha_hora =datetime.now().strftime("%d-%b-%Y %H:%M:%S")
+        self.Reloj.config(text=fecha_hora)            
+        self.root.after(60, self.check_inputs)
+
 
     def agregarRegistroRFID(self):
-        #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$impresion    $$$$$$$$$$$$$$$$$$$
-        MaxFolio=str(self.DB.MaxfolioEntrada())
-        MaxFolio = MaxFolio.strip("[(,)]")
-        n1 = MaxFolio
-        n2 = "1"
-        masuno = int(n1)+int(n2)
-        masuno = str(masuno)
-        self.MaxId.set(masuno)
+        placa=self.Placa.get()
+        if not placa:
+            self.label_informacion.config(text=f"Error: Ingrese una placa")
+            return
 
-        folio_cifrado = self.DB.cifrar_folio(folio = masuno)
+        MaxFolio=self.DB.MaxfolioEntrada()
+        MaxFolio = MaxFolio[0][0]
+        folio_boleto = MaxFolio + 1
+        self.MaxId.set(folio_boleto)
+
+        folio_cifrado = self.DB.cifrar_folio(folio = folio_boleto)
         # print(f"QR entrada: {folio_cifrado}")
 
         #Generar QR
@@ -126,28 +192,31 @@ class FormularioOperacion:
 
         horaentrada = str(fechaEntro)
         horaentrada=horaentrada[:19]
-        self.labelhr.configure(text=(horaentrada[:-3], "Entro"))
+        # self.labelhr.configure(text=(horaentrada[:-3], "Entro"))
         corteNum = 0
-        placa=str(self.Placa.get(), )
         datos=(fechaEntro, corteNum, placa)
 
-        p.image(logo_1)
-        p.text("--------------------------------------\n")
-        p.set(align="center")
-        p.text("BOLETO DE ENTRADA\n")
-        folioZZ=('FOLIO 000' + masuno)
-        p.text('Entro: '+horaentrada[:-3]+'\n')
-        p.text('Placas '+placa+'\n')
-        p.text(folioZZ+'\n')
+        printer = Usb(0x04b8, 0x0e15, 0)
 
-        p.set(align = "center")
-        p.image(qr_imagen)
+        printer.image(logo_1)
+        printer.text("--------------------------------------\n")
+        printer.text("BOLETO DE ENTRADA\n")
+        printer.text('Entro: '+horaentrada[:-3]+'\n')
+        printer.text('Placas '+placa+'\n')
+        printer.text(f'000{folio_boleto}\n')
+        printer.image(AutoA)
 
-        p.text("--------------------------------------\n")
-        p.cut()
+        printer.set(align = "center")
+        printer.image(qr_imagen)
+
+        printer.text("--------------------------------------\n")
+        printer.cut()
+
+        printer.close()
 
         self.DB.altaRegistroRFID(datos)
         self.Placa.set('')
+        self.label_informacion.config(text="Se genera boleto")
 
 
     #########################fin de pagina1 inicio pagina2#########################
@@ -155,63 +224,74 @@ class FormularioOperacion:
         self.pagina2 = ttk.Frame(self.cuaderno1)
         self.cuaderno1.add(self.pagina2, text=" Modulo de Cobro")
         #en el frame
-        self.FOLIO_QR=ttk.LabelFrame(self.pagina2, text="FOLIO_QR")
-        self.FOLIO_QR.grid(column=0, row=0, padx=5, pady=10, sticky=tk.NW)
+        self.FOLIO_QR=tk.LabelFrame(self.pagina2, text="FOLIO_QR")
+        self.FOLIO_QR.grid(column=0, row=0, padx=2, pady=10, sticky=tk.NW)
 
-        self.labelframe2=ttk.LabelFrame(self.FOLIO_QR, text="Autos")
-        self.labelframe2.grid(column=0, row=0, padx=5, pady=10, sticky=tk.NW)
-        self.label1=ttk.Label(self.labelframe2, text="Lector QR")
+        self.labelframe2=tk.LabelFrame(self.FOLIO_QR, text="Autos")
+        self.labelframe2.grid(column=0, row=0, padx=2, pady=10, sticky=tk.NW)
+        self.label1=tk.Label(self.labelframe2, text="Lector QR")
         self.label1.grid(column=0, row=0, padx=4, pady=4)
-        self.label3=ttk.Label(self.labelframe2, text="Entro:")
+        self.label3=tk.Label(self.labelframe2, text="Entro:")
         self.label3.grid(column=0, row=1, padx=4, pady=4)
-        self.label4=ttk.Label(self.labelframe2, text="Salio:")
+        self.label4=tk.Label(self.labelframe2, text="Salio:")
         self.label4.grid(column=0, row=2, padx=4, pady=4)
 
 
-        self.labelpromo=ttk.LabelFrame(self.FOLIO_QR, text="Leer el QR de Promocion")
-        self.labelpromo.grid(column=0, row=1, padx=5, pady=10, sticky=tk.NW)
-        self.promolbl1=ttk.Label(self.labelpromo, text="Codigo QR")
+        self.labelpromo=tk.LabelFrame(self.FOLIO_QR, text="Leer el QR de Promocion")
+        self.labelpromo.grid(column=0, row=1, padx=2, pady=10, sticky=tk.NW)
+        self.promolbl1=tk.Label(self.labelpromo, text="Codigo QR")
         self.promolbl1.grid(column=0, row=0, padx=4, pady=4)
-        self.promolbl2=ttk.Label(self.labelpromo, text="Tipo Prom")
+        self.promolbl2=tk.Label(self.labelpromo, text="Tipo Prom")
         self.promolbl2.grid(column=0, row=1, padx=4, pady=4)
 
+        #creamos un objeto para obtener la lectura de la PROMOCION
+        self.promo=tk.StringVar()
+        self.entrypromo=tk.Entry(self.labelpromo, textvariable=self.promo, justify='center')
+        self.entrypromo.bind('<Return>',self.CalculaPromocion)#con esto se lee automatico
+        self.entrypromo.grid(column=1, row=0, padx=4, pady=4)           
+        #este es donde pongo el tipo de PROMOCION
+        self.PrTi=tk.StringVar()
+        self.entryPrTi=tk.Entry(self.labelpromo, width=20, textvariable=self.PrTi, state= "readonly", justify='center')
+        self.entryPrTi.grid(column=1, row=1)
+        #botones
 
-        self.labelcuantopagas=ttk.LabelFrame(self.FOLIO_QR, text='cual es el pago')
-        self.labelcuantopagas.grid(column=0,row=2, padx=5, pady=10, sticky=tk.NW)
-        self.cuantopagas=ttk.Label(self.labelcuantopagas, text="la cantidad entregada")
+
+        self.labelcuantopagas=tk.LabelFrame(self.FOLIO_QR, text='cual es el pago')
+        self.labelcuantopagas.grid(column=0,row=2, padx=2, pady=10, sticky=tk.NW)
+        self.cuantopagas=tk.Label(self.labelcuantopagas, text="la cantidad entregada")
         self.cuantopagas.grid(column=0, row=0, padx=4, pady=4)
-        self.importees=ttk.Label(self.labelcuantopagas, text="el importe es")
+        self.importees=tk.Label(self.labelcuantopagas, text="el importe es")
         self.importees.grid(column=0, row=1, padx=4, pady=4)
-        self.cambio=ttk.Label(self.labelcuantopagas, text="el cambio es")
+        self.cambio=tk.Label(self.labelcuantopagas, text="el cambio es")
         self.cambio.grid(column=0, row=2, padx=4, pady=4)
         self.cuantopagasen=tk.StringVar()
         self.cuantopagasen.set(100)
-        self.entrycuantopagasen=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.cuantopagasen)
+        self.entrycuantopagasen=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.cuantopagasen, justify='center')
         #self.entrycuantopagasen.bind('<Return>',self.calcular_cambio)
         self.entrycuantopagasen.grid(column=1, row=0)
         self.elimportees=tk.StringVar()
-        self.entryelimportees=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.elimportees, state="readonly")
+        self.entryelimportees=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.elimportees, state="readonly", justify='center')
         self.entryelimportees.grid(column=1, row=1)
         self.elcambioes=tk.StringVar()
-        self.entryelcambioes=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.elcambioes, state="readonly")
+        self.entryelcambioes=tk.Entry(self.labelcuantopagas, width=15, textvariable=self.elcambioes, state="readonly", justify='center')
         self.entryelcambioes.grid(column=1, row=2)
 
 
         #en otro frame
-        self.labelframe3_principal=ttk.LabelFrame(self.pagina2, text="Datos del COBRO")
+        self.labelframe3_principal=tk.LabelFrame(self.pagina2, text="Datos del COBRO")
         self.labelframe3_principal.grid(column=1, row=0, pady=10, sticky=tk.NW)
 
-        self.labelframe3=ttk.LabelFrame(self.labelframe3_principal, text="Tiempo y Salida")
-        self.labelframe3.grid(column=0, row=0, padx=5, pady=10, sticky=tk.NW)
-        self.lbl1=ttk.Label(self.labelframe3, text="Hr Salida")
+        self.labelframe3=tk.LabelFrame(self.labelframe3_principal, text="Tiempo y Salida")
+        self.labelframe3.grid(column=0, row=0, padx=2, pady=10, sticky=tk.NW)
+        self.lbl1=tk.Label(self.labelframe3, text="Hr Salida")
         self.lbl1.grid(column=0, row=1, padx=4, pady=4)
-        self.lbl2=ttk.Label(self.labelframe3, text="TiempoTotal")
+        self.lbl2=tk.Label(self.labelframe3, text="TiempoTotal")
         self.lbl2.grid(column=0, row=2, padx=4, pady=4)
-        self.lbl3=ttk.Label(self.labelframe3, text="Importe")
+        self.lbl3=tk.Label(self.labelframe3, text="Importe")
         self.lbl3.grid(column=0, row=3, padx=4, pady=4)
 
 
-        self.IImporte = ttk.Label(self.labelframe3, text="") #Creacion del Label
+        self.IImporte = tk.Label(self.labelframe3, text="") #Creacion del Label
         self.IImporte.config(width =4)
         self.IImporte.config(background="white") #Cambiar color de fondo
         self.IImporte.config(font=('Arial', 48)) #Cambiar tipo y tamaño de fuente
@@ -235,47 +315,47 @@ class FormularioOperacion:
 
 
         self.scrol_datos_boleto_cobrado=st.ScrolledText(self.labelframe3_principal, width=28, height=7)
-        self.scrol_datos_boleto_cobrado.grid(column=0, row=1, padx=5, pady=10)
+        self.scrol_datos_boleto_cobrado.grid(column=0,row=1, padx=1, pady=1)
 
+        self.label15=tk.Label(self.labelframe3_principal, text="Viabilidad de COBRO")
+        self.label15.grid(column=0, row=2, padx=0, pady=0)
 
-        self.labelPerdido_principal=ttk.LabelFrame(self.pagina2, text="")
+        self.labelPerdido_principal=tk.LabelFrame(self.pagina2, text="")
         self.labelPerdido_principal.grid(column=2,row=0, pady=10, sticky=tk.NW)
 
-        self.labelPerdido=ttk.LabelFrame(self.labelPerdido_principal, text="Boleto Perdido/Dañado")
-        self.labelPerdido.grid(column=0,row=0,padx=5, pady=10, sticky=tk.NW)
+        self.labelPerdido=tk.LabelFrame(self.labelPerdido_principal, text="Boleto Perdido/Dañado")
+        self.labelPerdido.grid(column=0,row=0,padx=2, pady=10, sticky=tk.NW)
 
 
-        self.label_frame_folio=ttk.LabelFrame(self.labelPerdido, text="FOLIO")
-        self.label_frame_folio.grid(column=0,row=0,padx=5, pady=10, sticky=tk.NW)
+        self.label_frame_folio=tk.LabelFrame(self.labelPerdido, text="FOLIO")
+        self.label_frame_folio.grid(column=0,row=0,padx=2, pady=10, sticky=tk.NW)
 
 
-        self.lblFOLIO=ttk.Label(self.label_frame_folio, text="INGRESE FOLIO", font=("Arial", 11))
-        self.lblFOLIO.grid(column=0, row=0, sticky=tk.NW,padx=5, pady=5)
+        self.lblFOLIO=tk.Label(self.label_frame_folio, text="INGRESE FOLIO", font=("Arial", 11))
+        self.lblFOLIO.grid(column=0, row=0, sticky=tk.NW,padx=2, pady=5)
 
         self.PonerFOLIO=tk.StringVar()
-        self.entryPonerFOLIO=tk.Entry(self.label_frame_folio, width=15, textvariable=self.PonerFOLIO, font=("Arial", 11))
-        self.entryPonerFOLIO.grid(column=1, row=0, sticky=tk.NW,padx=5, pady=5)
+        self.entryPonerFOLIO=tk.Entry(self.label_frame_folio, width=15, textvariable=self.PonerFOLIO, font=("Arial", 11), justify='center')
+        self.entryPonerFOLIO.grid(column=1, row=0, sticky=tk.NW,padx=2, pady=5)
 
 
-        self.label_botones_boletos_perdido=ttk.LabelFrame(self.labelPerdido, text="BOLETO DAÑADO/PERDIDO")
-        self.label_botones_boletos_perdido.grid(column=0,row=1,padx=5, pady=10, sticky=tk.NW)
+        self.label_botones_boletos_perdido=tk.LabelFrame(self.labelPerdido, text="BOLETO DAÑADO/PERDIDO")
+        self.label_botones_boletos_perdido.grid(column=0,row=1,padx=2, pady=10, sticky=tk.NW)
 
-        self.boton_boleto_dañado=tk.Button(self.label_botones_boletos_perdido, text="Boleto Dañado", command=self.BoletoDañado, width=10, height=3, anchor="center", font=("Arial", 10))
+        self.boton_boleto_dañado=tk.Button(self.label_botones_boletos_perdido, text="Boleto\nDañado", background=button_color, fg=button_letters_color, command=self.BoletoDañado, width=10, height=3, anchor="center", font=("Arial", 10))
         self.boton_boleto_dañado.grid(column=0, row=1, sticky=tk.NE, padx=10, pady=5)
 
-        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nCON FOLIO", command=self.BoletoPerdido_conFolio, width=10, height=3, anchor="center", font=("Arial", 10))
+        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nCON FOLIO", background=button_color, fg=button_letters_color, command=self.BoletoPerdido_conFolio, width=10, height=3, anchor="center", font=("Arial", 10))
         self.boton3.grid(column=1, row=1, sticky=tk.NE, padx=10, pady=5)
 
-        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nSIN FOLIO", command=self.BoletoPerdido_sinFolio, width=10, height=3, anchor="center", font=("Arial", 10))
+        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nSIN FOLIO", background=button_color, fg=button_letters_color, command=self.BoletoPerdido_sinFolio, width=10, height=3, anchor="center", font=("Arial", 10), state = "disabled")
         self.boton3.grid(column=2, row=1, sticky=tk.NE, padx=10, pady=5)
 
 
+        self.labelPerdido2=tk.LabelFrame(self.labelPerdido_principal, text="Boletos sin cobro")
+        self.labelPerdido2.grid(column=0,row=1,padx=2, pady=10, sticky=tk.NW)
 
-
-        self.labelPerdido2=ttk.LabelFrame(self.labelPerdido_principal, text="Boletos sin cobro")
-        self.labelPerdido2.grid(column=0,row=1,padx=5, pady=10, sticky=tk.NW)
-
-        self.boton2=tk.Button(self.labelPerdido2, text="B./SIN cobro", command=self.BoletoDentro, width=10, height=2, anchor="center")
+        self.boton2=tk.Button(self.labelPerdido2, text="B./SIN cobro", command=self.BoletoDentro, width=10, height=2, anchor="center", background=button_color, fg=button_letters_color)
         self.boton2.grid(column=0, row=0)
 
         self.scrolledtxt=st.ScrolledText(self.labelPerdido2, width=28, height=7)
@@ -284,12 +364,9 @@ class FormularioOperacion:
 
 
 
-
-        self.label15=ttk.Label(self.pagina2, text="Viabilidad de COBRO")
-        self.label15.grid(column=1, row=2, padx=0, pady=0)
         #se crea objeto para ver pedir el folio la etiqueta con texto
         self.folio=tk.StringVar()
-        self.entryfolio=tk.Entry(self.labelframe2, textvariable=self.folio)
+        self.entryfolio=tk.Entry(self.labelframe2, textvariable=self.folio, justify='center')
         self.entryfolio.bind('<Return>',self.consultar)#con esto se lee automatico y se va a consultar
         self.entryfolio.grid(column=1, row=0, padx=4, pady=4)
         #se crea objeto para mostrar el dato de la  Entrada solo lectura
@@ -305,17 +382,17 @@ class FormularioOperacion:
         #creamos un objeto para obtener la lectura de la PROMOCION
         self.promo=tk.StringVar()
         self.promo_auxiliar=tk.StringVar()
-        self.entrypromo=tk.Entry(self.labelpromo, textvariable=self.promo)
+        self.entrypromo=tk.Entry(self.labelpromo, textvariable=self.promo, justify='center')
         self.entrypromo.bind('<Return>',self.CalculaPromocion)#con esto se lee automatico
         self.entrypromo.grid(column=1, row=0, padx=4, pady=4)           
         #este es donde pongo el tipo de PROMOCION
         self.TarifaPreferente=tk.StringVar()
-        self.entryTarifaPreferente=tk.Entry(self.labelpromo, width=20, textvariable=self.TarifaPreferente, state= "readonly")
+        self.entryTarifaPreferente=tk.Entry(self.labelpromo, width=20, textvariable=self.TarifaPreferente, state= "readonly", justify='center')
         self.entryTarifaPreferente.grid(column=1, row=1)
         #botones
 
 
-        self.bcambio=tk.Button(self.labelcuantopagas, text="Cobro", command=self.calcular_cambio, width=10, height=2, anchor="center", background="red")
+        self.bcambio=tk.Button(self.labelcuantopagas, text="Cobro", command=self.calcular_cambio, width=10, height=2, anchor="center", background=button_color, fg=button_letters_color)
         self.bcambio.grid(column=0, row=4)
 
         self.BoletoDentro()
@@ -362,14 +439,13 @@ class FormularioOperacion:
             # Calcular la permanencia
             self.CalculaPermanencia()
 
-
             if penalizacion_con_importe:
 
                 # Calcular el importe basado en las horas y días de permanencia
                 if self.horas_dentro <= 24:
-                    importe = 200 + ((self.dias_dentro) * 720 + (self.horas_dentro * 20))
+                    importe = 200
                 elif self.horas_dentro > 24 or self.dias_dentro >= 1:
-                    importe = 200 + ((self.dias_dentro) * 720 + (self.horas_dentro * 20))
+                    importe = 200 + ((self.dias_dentro) * 720 + (self.horas_dentro * 30))
 
             else:
                 importe = 250
@@ -399,45 +475,45 @@ class FormularioOperacion:
         """
         Boleto_perdido = mb.askokcancel("Advertencia", f"¿Esta seguro de imprimir un boleto perdido?")
 
-        if Boleto_perdido:
-            MaxFolio=str(self.DB.MaxfolioEntrada())
-            MaxFolio = MaxFolio.strip("[(,)]")
-            n1 = MaxFolio
-            n2 = "1"
-            masuno = int(n1)+int(n2)
-            masuno = str(masuno)
-            self.MaxId.set(masuno)
+        if Boleto_perdido == False:
+            return
 
-            fechaEntro = datetime.today()
-            horaentrada = str(fechaEntro)
-            horaentrada=horaentrada[:19]
-            corteNum = 0
-            placa="BoletoPerdido"
-            datos=(fechaEntro, corteNum, placa)
+        MaxFolio=str(self.DB.MaxfolioEntrada())
+        MaxFolio = MaxFolio[0][0]
+        folio_boleto = MaxFolio + 1
+        self.MaxId.set(folio_boleto)
 
-            #aqui lo imprimimos
+        fechaEntro = datetime.today()
+        horaentrada = str(fechaEntro)
+        horaentrada=horaentrada[:19]
+        corteNum = 0
+        placa="BoletoPerdido"
+        datos=(fechaEntro, corteNum, placa)
 
-            p.image(logo_1)
-            p.text("--------------------------------------\n")
-            p.set(align = "center")
-            p.text("B O L E T O  P E R D I D O\n")
-            p.set(align="center")
-            p.text("BOLETO DE ENTRADA\n")
-            folioZZ=('FOLIO 000' + masuno)
-            p.text('Entro: '+horaentrada[:-3]+'\n')
-            p.text('Placas '+placa+'\n')
-            p.text(folioZZ+'\n')
-            p.set(align = "center")
-            p.text("B O L E T O  P E R D I D O\n")
-            p.text("--------------------------------------\n")
-            p.cut()
+        #aqui lo imprimimos
+        printer = Usb(0x04b8, 0x0e15, 0)
 
-            #Agregar registro del pago a la base de datos
-            self.DB.altaRegistroRFID(datos)
-            self.Placa.set('')
+        printer.image(logo_1)
+        printer.text("--------------------------------------\n")
+        printer.set(align = "center")
+        printer.text("B O L E T O  P E R D I D O\n")
+        printer.set(align="center")
+        printer.text("BOLETO DE ENTRADA\n")
+        printer.text('Entro: '+horaentrada[:-3]+'\n')
+        printer.text('Placas '+placa+'\n')
+        printer.text(f'000{folio_boleto}\n')
+        printer.set(align = "center")
+        printer.text("B O L E T O  P E R D I D O\n")
+        printer.text("--------------------------------------\n")
+
+        printer.cut()
+        printer.close()
+
+        #Agregar registro del pago a la base de datos
+        self.DB.altaRegistroRFID(datos)
+        self.Placa.set('')
 
         self.BoletoDentro()
-        self.BoletoDentro2()
 
     def consultar(self, event):
         # Vaciar campo de importe
@@ -579,12 +655,17 @@ class FormularioOperacion:
         importe = 0
 
         if self.dias_dentro == 0 and self.horas_dentro == 0:
-            # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 20 unidades
-            importe = 20
+            # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 25 unidades
+            importe = 25
         else:
-            # Si la permanencia es mayor a 1 hora, se calcula el importe según una formula específica
-            importe = ((self.dias_dentro) * 250 + (self.horas_dentro * 20) + (minutos) * 5)
+            if minutos <= 1: 
+                importe = (self.horas_dentro * 25) + (minutos * 7)
 
+            else: 
+                importe = (self.horas_dentro * 25) + (minutos * 6) + 1 
+
+
+        importe = importe + (self.dias_dentro * 600)
         # Establecer el importe y mostrarlo
         self.mostrar_importe(importe)
 
@@ -646,57 +727,53 @@ class FormularioOperacion:
         TiempoTotal = self.TiempoTotal.get()[:-3]
 
         valor = 'N/A'
-
         # Configuracion de la impresora
-        p.set(align="center")
-        p.text(f"{titulo}\n")
+        printer = Usb(0x04b8, 0x0e15, 0)
+        printer.set(align="center")
+        printer.text(f"{titulo}\n")
 
         if titulo == "Boleto Cancelado":
             # Seccion de comprobante para boletos cancelados
-            p.set(align="left")
+            printer.set(align="left")
 
-            p.text(f'Folio boleto cancelado: {Folio}\n')
-            hoy = datetime.today().strftime("%b-%d-%A-%Y %H:%M:%S")
-            p.set('Big line\n', font='b')
-            p.text(f'Fecha: {hoy[:-3]}\n')
-            p.text(f'El auto entro: {Entrada}\n')
-            p.text(f'El auto salio: {Salida}\n')
+            printer.text(f'Folio boleto cancelado: {Folio}\n')
+            printer.text(f'El auto entro: {Entrada}\n')
+            printer.text(f'El auto salio: {Salida}\n')
+            printer.text(f'Motivo: {self.motive_cancel.get()}\n')
         else:
             # Seccion de comprobante para pagos normales o boletos perdidos
 
             if Placa == "BoletoPerdido":
                 # Si es un boleto perdido, muestra un mensaje especial
-                p.text("BOLETO PERDIDO\n")
+                printer.text("BOLETO PERDIDO\n")
                 Entrada = valor
                 Salida = valor
                 TiempoTotal = valor
 
             if imagen_logo:
-                imgqr = (Salida + Folio)
-                self.DB.generar_QR(imgqr)
-
                 # Imprimir el logo si está habilitado
-                p.image(logo_1)
+                printer.image(logo_1)
                 print("Imprime logo")
-            p.set(align="left")
-
-            p.text("El importe es: $" + Importe + "\n")
-            p.text('El auto entro: ' + Entrada + '\n')
-            p.text('El auto salio: ' + Salida + '\n')
-            p.text('El auto permanecio: ' + TiempoTotal + '\n')
-            p.text('El folio del boleto es: ' + Folio + '\n')
-            p.text('TIPO DE COBRO: ' + TarifaPreferente + '\n')
+            
+            printer.set(align="left")
+            printer.text("El importe es: $" + Importe + "\n")
+            printer.text('El auto entro: ' + Entrada + '\n')
+            printer.text('El auto salio: ' + Salida + '\n')
+            printer.text('El auto permanecio: ' + TiempoTotal + '\n')
+            printer.text('El folio del boleto es: ' + Folio + '\n')
+            printer.text('TIPO DE COBRO: ' + TarifaPreferente + '\n')
 
             if QR_salida:
                 # Imprimir el codigo QR de salida si está habilitado
-                p.set(align="center")
-                p.image(qr_imagen)
+                printer.set(align="center")
+                printer.image(qr_imagen)
                 print("Imprime QR salida")
 
-        p.cut()
+        printer.cut()
+        printer.close()
 
 
-    def GuardarCobro(self):
+    def GuardarCobro(self, motive:str=None):
         """Guarda la informacion de un cobro realizado en la base de datos."""
 
         # Obtener el valor del codigo QR de promocion (si está presente, de lo contrario, será None)
@@ -721,18 +798,16 @@ class FormularioOperacion:
         TarifaPreferente = self.TarifaPreferente.get()
         importe = self.importe.get()
 
-        # Configurar una etiqueta con informacion de prueba
         self.label15.configure(text=(Salida, "SI se debe modificar"))
 
         # Valor para verificar el cobro (valor de ejemplo)
         vobo = "lmf"
 
         # Crear una tupla con los datos del cobro
-        datos = (vobo, importe, TiempoTotal, Entrada, Salida, TarifaPreferente, QRPromo, folio)
+        datos = (motive, vobo, importe, TiempoTotal, Entrada, Salida, TarifaPreferente, QRPromo, folio)
 
         # Guardar el cobro en la base de datos
         self.DB.guardacobro(datos)
-
 
     def CalculaPromocion(self, event):
         """
@@ -792,12 +867,12 @@ class FormularioOperacion:
 
             if self.horas_dentro <= 8:
                 if self.horas_dentro == 8 and self.minutos_dentro > 0:
-                    importe= importe - 80
+                    importe= importe - 120
                 else: 
                     importe = 80
 
             else:# self.horas_dentro > 8:
-                importe= importe - 80
+                importe= importe - 120
 
             text_promo = "EVENTO"
 
@@ -850,37 +925,38 @@ class FormularioOperacion:
 
 
 
-
     ###################### Fin de Pagina2 Inicio Pagina3 ###############################
     def listado_completo(self):
+        self.motive_cancel=tk.StringVar()
+
         self.pagina3 = ttk.Frame(self.cuaderno1)
         self.cuaderno1.add(self.pagina3, text="Modulo de Corte")
-        self.labelframe1=ttk.LabelFrame(self.pagina3, text="Autos")
+        self.labelframe1=tk.LabelFrame(self.pagina3, text="Autos")
         self.labelframe1.grid(column=0, row=0, padx=1, pady=1)
-        self.labelframe2=ttk.LabelFrame(self.pagina3, text="Generar Corte")
+        self.labelframe2=tk.LabelFrame(self.pagina3, text="Generar Corte")
         self.labelframe2.grid(column=1, row=0, padx=0, pady=0)
-        self.labelframe3=ttk.LabelFrame(self.pagina3, text="Consulta Cortes Anteriores")
+        self.labelframe3=tk.LabelFrame(self.pagina3, text="Consulta Cortes Anteriores")
         self.labelframe3.grid(column=0, row=1, padx=0, pady=0)
 
-        self.labelframe4=ttk.LabelFrame(self.pagina3, text="Cuadro Comparativo")
+        self.labelframe4=tk.LabelFrame(self.pagina3, text="Cuadro Comparativo")
         self.labelframe4.grid(column=1, row=1, padx=0, pady=0)
-        self.labelframe5=ttk.LabelFrame(self.pagina3, text="Reporte de Cortes")
+        self.labelframe5=tk.LabelFrame(self.pagina3, text="Reporte de Cortes")
         self.labelframe5.grid(column=1, row=2, padx=1, pady=1)       
-        self.lblSal=ttk.Label(self.labelframe4, text="Salida de Autos")
+        self.lblSal=tk.Label(self.labelframe4, text="Salida de Autos")
         self.lblSal.grid(column=3, row=1, padx=1, pady=1)
-        self.lblS=ttk.Label(self.labelframe4, text="Entrada de Autos")
+        self.lblS=tk.Label(self.labelframe4, text="Entrada de Autos")
         self.lblS.grid(column=3, row=2, padx=1, pady=1)
-        self.lblAnterior=ttk.Label(self.labelframe4, text="Autos del Turno anterior")
+        self.lblAnterior=tk.Label(self.labelframe4, text="Autos del Turno anterior")
         self.lblAnterior.grid(column=3, row=3, padx=1, pady=1)
-        self.lblEnEstac=ttk.Label(self.labelframe4, text="Autos en Estacionamiento")
+        self.lblEnEstac=tk.Label(self.labelframe4, text="Autos en Estacionamiento")
         self.lblEnEstac.grid(column=3, row=4, padx=1, pady=1)
-        self.lblC=ttk.Label(self.labelframe4, text="Boletos Cobrados:")
+        self.lblC=tk.Label(self.labelframe4, text="Boletos Cobrados:")
         self.lblC.grid(column=0, row=1, padx=1, pady=1)
-        self.lblE=ttk.Label(self.labelframe4, text="Boletos Expedidos:")
+        self.lblE=tk.Label(self.labelframe4, text="Boletos Expedidos:")
         self.lblE.grid(column=0, row=2, padx=1, pady=1)
-        self.lblA=ttk.Label(self.labelframe4, text="Boletos Turno Anterior:")
+        self.lblA=tk.Label(self.labelframe4, text="Boletos Turno Anterior:")
         self.lblA.grid(column=0, row=3, padx=1, pady=1)
-        self.lblT=ttk.Label(self.labelframe4, text="Boletos Por Cobrar:")
+        self.lblT=tk.Label(self.labelframe4, text="Boletos Por Cobrar:")
         self.lblT.grid(column=0, row=4, padx=1, pady=1)
         self.BoletosCobrados=tk.StringVar()
         self.entryBoletosCobrados=tk.Entry(self.labelframe4, width=5, textvariable=self.BoletosCobrados, state= "readonly")
@@ -906,40 +982,34 @@ class FormularioOperacion:
         self.AutosEnEstacionamiento=tk.StringVar()
         self.entryAutosEnEstacionamiento=tk.Entry(self.labelframe4, width=5, textvariable=self.AutosEnEstacionamiento, state= "readonly", borderwidth=5)
         self.entryAutosEnEstacionamiento.grid(column=2, row=4)
-        self.boton6=tk.Button(self.labelframe4, text="Consulta Bol-Sensor", command=self.Puertoycontar, width=15, height=3, anchor="center")
+        self.boton6=tk.Button(self.labelframe4, text="Consulta Bol-Sensor", command=self.Puertoycontar, width=15, height=1, anchor="center", background=button_color, fg=button_letters_color)
         self.boton6.grid(column=1, row=0, padx=1, pady=1)
 
-        self.FrmCancelado=ttk.LabelFrame(self.pagina3, text="Boleto Cancelado")
+        self.FrmCancelado=tk.LabelFrame(self.pagina3, text="Boleto Cancelado")
         self.FrmCancelado.grid(column=0, row=2, padx=0, pady=0)
-        self.labelCorte=ttk.Label(self.labelframe2, text="El Total del CORTE es:")
+        self.labelCorte=tk.Label(self.labelframe2, text="El Total del CORTE es:")
         self.labelCorte.grid(column=0, row=1, padx=0, pady=0)
-        self.label2=ttk.Label(self.labelframe2, text="La Fecha de CORTE es:")
+        self.label2=tk.Label(self.labelframe2, text="La Fecha de CORTE es:")
         self.label2.grid(column=0, row=2, padx=1, pady=1)
-        self.label3=ttk.Label(self.labelframe2, text="El CORTE Inicia ")
+        self.label3=tk.Label(self.labelframe2, text="El CORTE Inicia ")
         self.label3.grid(column=0, row=3, padx=1, pady=1)
-        self.label4=ttk.Label(self.labelframe2, text="El Numero de CORTE es:")
+        self.label4=tk.Label(self.labelframe2, text="El Numero de CORTE es:")
         self.label4.grid(column=0, row=4, padx=1, pady=1)
-        self.label5=ttk.Label(self.labelframe3, text="CORTE a Consultar :")
+        self.label5=tk.Label(self.labelframe3, text="CORTE a Consultar :")
         self.label5.grid(column=0, row=1, padx=1, pady=1)
-        self.label6=ttk.Label(self.labelframe3, text="Fecha y hora del CORTE")
+        self.label6=tk.Label(self.labelframe3, text="Fecha y hora del CORTE")
         self.label6.grid(column=0, row=2, padx=1, pady=1)
 
-        self.lblCancelado=ttk.Label(self.FrmCancelado, text="COLOCAR FOLIO")
-        self.lblCancelado.grid(column=0, row=1, padx=4, pady=4)
-        self.FolioCancelado=tk.StringVar()
-        self.entryFOLIOCancelado=tk.Entry(self.FrmCancelado, width=15, textvariable=self.FolioCancelado)
-        self.entryFOLIOCancelado.grid(column=1, row=1)
-        self.boton7=tk.Button(self.FrmCancelado, text="B./SIN cobro", command=self.BoletoDentro2, width=12, height=2, anchor="center")
-        self.boton7.grid(column=0, row=0, padx=1, pady=1)
 
-        self.btnCancelado=tk.Button(self.FrmCancelado, text="Cancelar Boleto ", command=self.BoletoCancelado, width=12, height=2, anchor="center")
-        self.btnCancelado.grid(column=0, row=2)
-        self.scrolledtxt2=st.ScrolledText(self.FrmCancelado, width=26, height=7)
-        self.scrolledtxt2.grid(column=1,row=0, padx=1, pady=1)
+        frame_folio_cancelado = tk.Frame(self.FrmCancelado)
+        frame_folio_cancelado.grid(column=1, row=1, padx=4, pady=4)
+
+        self.btnCancelado=tk.Button(frame_folio_cancelado, text="Cancelar Boleto ",command=self.BoletoCancelado,width=12, height=2, anchor="center", background=button_color, fg=button_letters_color)
+        self.btnCancelado.grid(column=1, row=0)
 
 
         self.ImporteCorte=tk.StringVar()
-        self.entryImporteCorte=tk.Entry(self.labelframe2, width=20, textvariable=self.ImporteCorte, state= "readonly", borderwidth=5)
+        self.entryImporteCorte=tk.Entry(self.labelframe2, width=20, textvariable=self.ImporteCorte, state= "readonly", borderwidth=5, justify='center')
         self.entryImporteCorte.grid(column=1, row=1)
         self.FechaCorte=tk.StringVar()
         self.entryFechaCorte=tk.Entry(self.labelframe2, width=20, textvariable=self.FechaCorte, state= "readonly")
@@ -948,25 +1018,32 @@ class FormularioOperacion:
         self.entryFechUCORTE=tk.Entry(self.labelframe2, width=20, textvariable=self.FechUCORTE, state= "readonly")
         self.entryFechUCORTE.grid(column=1, row=3)
 
-
-
         self.CortesAnteri=tk.StringVar()
         self.entryCortesAnteri=tk.Entry(self.labelframe3, width=20, textvariable=self.CortesAnteri)
         self.entryCortesAnteri.grid(column=1, row=0)
-        
-        self.boton1=ttk.Button(self.labelframe1, text="Todas las Entradas", command=self.listar)
+
+        frame_botones_entrada = Frame(self.labelframe1)
+        frame_botones_entrada.grid(column=0, row=0, padx=4, pady=4)
+
+        self.boton1=ttk.Button(frame_botones_entrada, text="Todas las Entradas", command=self.listar)
         self.boton1.grid(column=0, row=0, padx=4, pady=4)
-        self.boton2=ttk.Button(self.labelframe1, text="Entradas sin corte", command=self.listar1)
-        self.boton2.grid(column=0, row=2, padx=4, pady=4)
-        self.boton3=tk.Button(self.labelframe2, text="Calcular Corte", command=self.Calcular_Corte, width=15, height=1)
-        self.boton3.grid(column=2, row=0, padx=4, pady=4)
-        self.boton4=tk.Button(self.labelframe2, text="Generar Corte", command=self.Guardar_Corte, width=15, height=1, anchor="center", background="red")
-        self.boton4.grid(column=2, row=4, padx=4, pady=4)
-        self.boton5=tk.Button(self.labelframe3, text="Imprimir salidas\nCorte", command=self.desglose_cobrados, width=15, height=3, anchor="center")
+        self.boton2=ttk.Button(frame_botones_entrada, text="Entradas sin corte", command=self.listar1)
+        self.boton2.grid(column=1, row=0, padx=4, pady=4)
+
+        self.boton3=tk.Button(self.labelframe2, text="Calcular Corte", command=self.Calcular_Corte, width=15, height=1, background=button_color, fg=button_letters_color)
+        self.boton3.grid(column=2, row=1, padx=4, pady=4)
+        self.boton4=tk.Button(self.labelframe2, text="Generar Corte", command=self.Guardar_Corte, width=15, height=1, anchor="center", background=button_color, fg=button_letters_color)
+
+        self.boton4.grid(column=2, row=3, padx=4, pady=4)
+        self.boton5=tk.Button(self.labelframe3, text="Imprimir salidas\nCorte", background=button_color, fg=button_letters_color, command=self.desglose_cobrados, width=15, height=3, anchor="center")
         self.boton5.grid(column=1, row=2, padx=4, pady=4)
         self.scrolledtext1=st.ScrolledText(self.labelframe1, width=28, height=4)
         self.scrolledtext1.grid(column=0,row=1, padx=1, pady=1)
 
+        self.label7=tk.Label(self.labelframe5, text="Mes :")
+        self.label7.grid(column=0, row=0, padx=1, pady=1)
+        self.label8=tk.Label(self.labelframe5, text="Ano :")
+        self.label8.grid(column=0, row=2, padx=1, pady=1)
         self.comboMesCorte = ttk.Combobox(self.labelframe5, width=6, justify=tk.RIGHT, state="readonly")
         self.comboMesCorte["values"] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
         self.comboMesCorte.current(0)
@@ -976,14 +1053,11 @@ class FormularioOperacion:
         self.AnoCorte.set(Ano)
         self.entryAnoCorte=tk.Entry(self.labelframe5, width=7, textvariable=self.AnoCorte, justify=tk.RIGHT)
         self.entryAnoCorte.grid(column=1, row=2)
-        self.Clave2=tk.StringVar()
-        self.entryClave2=tk.Entry(self.labelframe5, width=7, textvariable=self.Clave2, show="*", justify=tk.RIGHT)
-        self.entryClave2.grid(column=1, row=5)
-        self.boton6=tk.Button(self.labelframe5, text="Reporte de Corte", command=self.Reporte_Corte, width=15, height=1, anchor="center", background="red")
+        self.boton6=tk.Button(self.labelframe5, text="Reporte de Corte", command=self.Reporte_Corte, width=15, height=1, anchor="center", background=button_color, fg=button_letters_color)
         self.boton6.grid(column=3, row=2, padx=4, pady=4)       
 
 
-        self.seccion_boton_usuario = ttk.LabelFrame(self.labelframe5, text='Administrar usuarios')
+        self.seccion_boton_usuario = tk.LabelFrame(self.labelframe5, text='Administrar usuarios')
         self.seccion_boton_usuario.grid(column=3, row=3, padx=4, pady=4, sticky='NESW') 
 
         self.boton_usuarios=tk.Button(self.seccion_boton_usuario, text="Entrar",	 
@@ -992,16 +1066,10 @@ class FormularioOperacion:
                 View_Login(),
                 self.activar()
                 },
-        width=15, height=1, anchor="center", background="red")
+        width=15, height=1, anchor="center", background=button_color, fg=button_letters_color)
         self.boton_usuarios.grid(column=0, row=0, padx=4, pady=4)
 
-        self.BoletoDentro2()
 
-    def BoletoDentro2(self):
-        respuesta=self.DB.Autos_dentro()
-        self.scrolledtxt2.delete("1.0", tk.END)
-        for fila in respuesta:
-            self.scrolledtxt2.insert(tk.END, "Folio num: "+str(fila[0])+"\nEntro: "+str(fila[1])[:-3]+"\nPlacas: "+str(fila[2])+"\n\n")
 
 
     def desglose_cobrados(self):
@@ -1010,87 +1078,143 @@ class FormularioOperacion:
         Numcorte=str(Numcorte)
 
         respuesta=self.DB.desglose_cobrados(Numcorte)
-        self.scrolledtxt2.delete("1.0", tk.END)
 
-        p.text("El Numero de corte es "+Numcorte+'\n')
+        printer = Usb(0x04b8, 0x0e15, 0)
+        printer.text("El Numero de corte es "+Numcorte+'\n')
         for fila in respuesta:
-            self.scrolledtxt2.insert(tk.END, str(fila[0])+" Boletos con tarifa "+str(fila[1])+"\n"+"valor c/u $"+str(fila[2])+" Total $"+str(fila[3])+"\n\n")
+            printer.text(f"  {str(fila[0])}  -  {str(fila[1])}  -  ${str(fila[2])}   -  ${str(fila[3])}\n")
 
-            p.text(f"  {str(fila[0])}  -  {str(fila[1])}  -  ${str(fila[2])}   -  ${str(fila[3])}\n")
+        printer.cut()
+        printer.close()
 
-        p.cut()
 
     def BoletoCancelado(self):
-        """
-        Esta funcion cancela un boleto específico.
+        self.desactivar()
+        # Crear la ventana principal
+        self.cancel_window = tk.Toplevel()
+        self.cancel_window.title("Cancelar Boleto")
 
-        Verifica si se ha ingresado un número de folio para cancelar y muestra una advertencia para confirmar la cancelacion.
-        Si se confirma la cancelacion, obtiene los datos del boleto cancelado y realiza las operaciones correspondientes.
-        Muestra informacion relevante del boleto cancelado y guarda el registro del cobro cancelado.
+        # Se elimina la funcionalidad del boton de cerrar
+        self.cancel_window.protocol("WM_DELETE_WINDOW", lambda: {self.activar(),self.cancel_window.destroy()})
 
-        :param self: Objeto de la clase que contiene los atributos y métodos necesarios.
+        # Elevar la ventana secundaria al frente de todas las otras ventanas
+        self.cancel_window.lift()
 
-        :return: None
-        """
+        # Colocar el LabelFrame en las coordenadas calculadas
+        principal_frame_cancel = tk.LabelFrame(self.cancel_window)
+        principal_frame_cancel.pack(expand=True, padx=5, pady=5, anchor='n')
 
-        if len(self.FolioCancelado.get()) == 0:
-            mb.showerror("Error", "Ingrese un folio a cancelar")
-            self.entryFOLIOCancelado.focus()
-            return
+        labelframe_cancelar_boleto=tk.LabelFrame(principal_frame_cancel, text="Cancelar Boleto")
+        labelframe_cancelar_boleto.grid(column=0, row=0, padx=5, pady=5)
 
-        cancelar = mb.askokcancel("Advertencia", f"¿Estas seguro de querer cancelar el boleto con folio: {self.FolioCancelado.get()}?")
+        labelframe_cancelar_boleto_folio=tk.Frame(labelframe_cancelar_boleto)
+        labelframe_cancelar_boleto_folio.grid(column=0, row=0, padx=5, pady=5)
 
-        if cancelar == False:
+        etiqueta = tk.Label(labelframe_cancelar_boleto_folio, text="Ingresa el Folio a cancelar: ", font=font_cancel)
+        etiqueta.grid(column=0, row=0, padx=2, pady=2)
+
+        self.FolioCancelado=tk.StringVar()
+        self.entry_folio_cancelado=tk.Entry(labelframe_cancelar_boleto_folio, width=10, textvariable=self.FolioCancelado, justify='center', font=font_cancel)
+        self.entry_folio_cancelado.grid(column=1, row=0, padx=2, pady=2)
+        self.entry_folio_cancelado.focus()
+
+
+        # Crear una etiqueta
+        etiqueta = tk.Label(labelframe_cancelar_boleto, text="Ingresa el motivo de la cancelación del boleto", font=font_cancel)
+        etiqueta.grid(column=0, row=1, padx=2, pady=5)
+
+        self.EntryMotive_Cancel = tk.Entry(labelframe_cancelar_boleto, font=font_cancel, width=30, textvariable=self.motive_cancel, justify='center')
+        self.EntryMotive_Cancel.grid(column=0, row=2, padx=2, pady=2)
+
+        # Crear un botón para obtener el texto
+        boton = tk.Button(labelframe_cancelar_boleto, text="Cancelar Boleto", command=lambda:cancelar_boleto(), background=button_color, fg=button_letters_color, width=15, height=2, font=font_cancel)
+        boton.grid(column=0, row=3, padx=2, pady=2)
+
+        labelframe_lista_boletos=tk.LabelFrame(principal_frame_cancel, text="Lista de boletos")
+        labelframe_lista_boletos.grid(column=1, row=0, padx=5, pady=5)
+
+        self.boton7=tk.Button(labelframe_lista_boletos, text="Actualizar", command=lambda:boletos_dentro(), width=12, height=1, background=button_color, fg=button_letters_color, font=font_cancel)
+        self.boton7.grid(column=0, row=0, padx=1, pady=1)
+
+        scroller_boletos_dentro=st.ScrolledText(labelframe_lista_boletos, width=25, height=8)
+        scroller_boletos_dentro.grid(column=0,row=1, padx=2, pady=2)
+
+        def boletos_dentro():
+            respuesta=self.DB.Autos_dentro()
+            scroller_boletos_dentro.delete("1.0", tk.END)
+            for fila in respuesta:
+                scroller_boletos_dentro.insert(tk.END, "Folio num: "+str(fila[0])+"\nEntro: "+str(fila[1])[:-3]+"\nPlacas: "+str(fila[2])+"\n\n")
+
+        boletos_dentro()
+
+        def cancelar_boleto():
+            folio = self.FolioCancelado.get()
+            if not folio:
+                mb.showerror("Error", "Ingrese un folio a cancelar")
+                self.entry_folio_cancelado.focus()
+                return
+
+            motive_cancel = self.motive_cancel.get()
+            if not motive_cancel:
+                mb.showerror("Error", "Ingresa el motivo por el cual se esta cancelando el boleto")
+                self.EntryMotive_Cancel.focus()
+                return 
+
+            cancelar = mb.askokcancel("Advertencia", f"¿Estas seguro de querer cancelar el boleto con folio: {self.FolioCancelado.get()}?")
+            if cancelar == False:
+                self.FolioCancelado.set("")
+                self.entry_folio_cancelado.focus()
+                return
+
+            self.folio.set(folio)
+
+            folio = self.folio.get()
+            respuesta = self.DB.consulta(folio)
+
+            if len(respuesta) == 0:
+                self.fecha_entrada.set('')
+                self.fecha_salida.set('')
+                self.motive_cancel.set("")
+                self.FolioCancelado.set("")
+                self.folio.set("")
+                mb.showinfo("Informacion", "No existe un auto con dicho codigo")
+                self.entry_folio_cancelado.focus()
+                return
+
+
+            Salida = respuesta[0][1]
+            Placas = respuesta[0][6]
+
+            if Salida is not None:
+                self.motive_cancel.set("")
+                self.FolioCancelado.set("")
+                self.folio.set("")
+                mb.showerror("Error", "No se puede cancelar un boleto ya cobrado")
+                self.entry_folio_cancelado.focus()
+                return
+
+            if Placas == "BoletoPerdido":
+                mb.showerror("Error", "El folio ingresado corresponde a una reposicion de un boleto perdido, no se puede cancelar.")
+                self.motive_cancel.set("")
+                self.FolioCancelado.set("")
+                self.folio.set("")
+                return
+
+            Entrada = str(respuesta[0][0])
+            self.fecha_entrada.set(Entrada)
+            self.CalculaPermanencia()
+            importe = 0
+
+            # Establecer el importe y mostrarlo
+            self.mostrar_importe(importe)
+            self.TarifaPreferente.set("CDO")
+            self.GuardarCobro(motive_cancel)
+            self.Comprobante(titulo='Boleto Cancelado', imagen_logo=False)
             self.FolioCancelado.set("")
-            self.entryFOLIOCancelado.focus()
-            return
+            self.limpiar_campos()
+            self.cancel_window.destroy()
+            self.activar()
 
-        folio = self.FolioCancelado.get()
-        self.folio.set(folio)
-
-        folio = self.folio.get()
-        respuesta = self.DB.consulta(folio)
-
-        if len(respuesta) == 0:
-            self.fecha_entrada.set('')
-            self.fecha_salida.set('')
-            mb.showinfo("Informacion", "No existe un auto con dicho codigo")
-            return
-
-        Salida = respuesta[0][1]
-        Placas = respuesta[0][6]
-
-        if Salida is not None:
-            self.FolioCancelado.set("")
-            self.folio.set("")
-            mb.showerror("Error", "No se puede cancelar un boleto ya cobrado")
-            return
-
-        if Placas == "BoletoPerdido":
-            mb.showerror("Error", "El folio ingresado corresponde a una reposicion de un boleto perdido, no se puede cancelar.")
-            self.FolioCancelado.set("")
-            self.folio.set("")
-            return
-
-        Entrada = str(respuesta[0][0])
-        self.fecha_entrada.set(Entrada)
-
-        self.CalculaPermanencia()
-
-        importe = 0
-
-        # Establecer el importe y mostrarlo
-        self.mostrar_importe(importe)
-
-        self.TarifaPreferente.set("CDO")
-
-        self.GuardarCobro()
-
-        self.Comprobante(titulo='Boleto Cancelado', imagen_logo=False)
-
-        self.FolioCancelado.set("")
-
-        self.limpiar_campos()
 
     def listar(self):
         respuesta=self.DB.recuperar_todos()
@@ -1104,32 +1228,36 @@ class FormularioOperacion:
         #respuesta=str(respuesta)
         for fila in respuesta:
             self.scrolledtext1.insert(tk.END, "Entrada num: "+str(fila[0])+"\nEntro: "+str(fila[1])[:-3]+"\nSalio: "+str(fila[2])[:-3]+"\nImporte: "+str(fila[3])+"\n\n")
-            ###p = Usb(0x04b8, 0x0202, 0)
-            #p = Usb(0x04b8, 0x0e15, 0)#esta es la impresora con sus valores que se obtienen con lsusb
-            p.text('Entrada Num :')
-            p.text(str(fila[0]))
-            p.text('\n')
-            p.text('Entro :')
-            p.text(str(fila[1])[:-3])
-            p.text('\n')
-            p.text('Salio :')
-            p.text(str(fila[2])[:-3])
-            p.text('\n')
-            p.text('importe :')
-            p.text(str(fila[3]))
-            p.text('\n')
+
+            printer = Usb(0x04b8, 0x0e15, 0)
+
+            printer.text('Entrada Num :')
+            printer.text(str(fila[0]))
+            printer.text('\n')
+            printer.text('Entro :')
+            printer.text(str(fila[1])[:-3])
+            printer.text('\n')
+            printer.text('Salio :')
+            printer.text(str(fila[2])[:-3])
+            printer.text('\n')
+            printer.text('importe :')
+            printer.text(str(fila[3]))
+            printer.text('\n')
         else:
-            p.text('\n')
-            p.cut()
+            print("-")
+            printer.cut()
+            printer.close()
 
     def Calcular_Corte(self):
         respuesta=self.DB.corte()
         self.ImporteCorte.set(respuesta)
         ##obtengamo la fechaFin del ultimo corte
-        ultiCort1=self.DB.UltimoCorte()
-        ultiCort1 = ultiCort1[0][0]
-        self.FechUCORTE.set(ultiCort1)
 
+        ultiCort1=self.DB.UltimoCorte()
+        ultiCort1=ultiCort1[0][0]
+
+        self.FechUCORTE.set(ultiCort1)# donde el label no esta bloqueada
+        ###ahora obtenemos la fecha del corte ha realizar
         fecha = datetime.today()
         fecha1= fecha.strftime("%Y-%m-%d %H:%M:%S")
         fechaActual= datetime.strptime(fecha1, '%Y-%m-%d %H:%M:%S')
@@ -1166,15 +1294,18 @@ class FormularioOperacion:
         ######el importe se obtiene de la suma
         ImpCorte2 =str(self.ImporteCorte.get(),)
         Im38=ImpCorte2.strip('(,)')
-        AEE=(self.DB.CuantosAutosdentro())
+        AEE = self.DB.CuantosAutosdentro()
         maxnumid=str(self.DB.MaxfolioEntrada())
         maxnumid = "".join([x for x in maxnumid if x.isdigit()])#con esto solo obtenemos los numeros
         maxnumid=int(maxnumid)
         maxnumid=str(maxnumid)
         pasa = str(self.BDentro.get(),)
         NumBolQued = pasa.strip('(),')
-        datos=(Im38, fechaInicio, fechaDECorte,AEE,maxnumid,NumBolQued)
+
+        Quedados_Pensionados = self.controlador_crud_pensionados.get_Quedados_Pensionados()
+        datos=(Im38, fechaInicio, fechaDECorte,AEE,maxnumid,NumBolQued, Quedados_Pensionados)
         self.DB.GuarCorte(datos)
+
         maxnum1=str(self.DB.Maxfolio_Cortes())
         maxnum = "".join([x for x in maxnum1 if x.isdigit()])#con esto solo obtenemos los numeros
         maxnum=int(maxnum)
@@ -1183,10 +1314,12 @@ class FormularioOperacion:
         ActEntradas = (maxnum, vobo )
         self.label4.configure(text=("Numero de corte",maxnum))
 
-        p.image(logo_1)
+        printer = Usb(0x04b8, 0x0e15, 0)
 
-        p.text(f" Est {nombre_estacionamiento} CORTE Num "+maxnum+"\n")
-        p.text('IMPORTE: $ '+Im38+'\n')
+        # printer.image(logo_1)
+
+        printer.text(f" Est {nombre_estacionamiento} CORTE Num "+maxnum+"\n")
+        printer.text('IMPORTE: $ '+Im38+'\n')
         ultiCort1=str(self.FechUCORTE.get(),)
         DDESEM=(datetime.today().weekday())
 
@@ -1207,53 +1340,56 @@ class FormularioOperacion:
 
         ultiCort4= datetime.strptime(ultiCort1, '%Y-%m-%d %H:%M:%S')
         ultiCort5 = datetime.strftime(ultiCort4, '%D a las %H:%M:%S')
-        p.text('Inicio: ')
-        p.text(str(DDESEM))
-        p.text(' ')
-        p.text(ultiCort5)
-        p.text('\n')
+        printer.text('Inicio: ')
+        printer.text(str(DDESEM))
+        printer.text(' ')
+        printer.text(ultiCort5)
+        printer.text('\n')
         valorFEsteCorte = str(self.FechaCorte.get(),)
         fechaDECorte = datetime.strptime(valorFEsteCorte, '%Y-%m-%d %H:%M:%S' )
         fechaDECorte = datetime.strftime(fechaDECorte, '%D a las %H:%M:%S' )
-        p.text('Final :')
-        p.text(str(DDESEM))
-        p.text(' ') 
-        p.text(str(fechaDECorte))
-        p.text('\n')
+        printer.text('Final :')
+        printer.text(str(DDESEM))
+        printer.text(' ') 
+        printer.text(str(fechaDECorte))
+        printer.text('\n')
         MaxFolio=str(self.DB.MaxfolioEntrada())
         MaxFolio = MaxFolio.strip("[(,)]")
         BEDespuesCorteImpre = str(self.BEDespuesCorte.get(),)
         BEDespuesCorteImpre = BEDespuesCorteImpre.strip("[(,)]")
         IniFolio =int(MaxFolio)-int(BEDespuesCorteImpre)
         IniFolio = str(IniFolio)
-        p.text("Folio "+IniFolio+" al inicio del turno\n")
-        p.text("Folio "+MaxFolio+" al final del turno\n") 
-        p.text("Cajero en Turno: "+nombre2+"\n")
-        p.text("Turno: "+str(turno1)+"\n")
+        printer.text("Folio "+IniFolio+" al inicio del turno\n")
+        printer.text("Folio "+MaxFolio+" al final del turno\n") 
+        printer.text("Cajero en Turno: "+nombre2+"\n")
+        printer.text("Turno: "+str(turno1)+"\n")
         dato =(inicio1)
         inicios = self.DB.IniciosdeTurno(dato)
         for fila in inicios:
-            p.text("Sesion "+fila[1]+": "+str(fila[0])+"\n")
-                                        
-        BolCobrImpresion=str(self.BoletosCobrados.get(),)
-        p.text("Boletos Cobrados: "+BolCobrImpresion+"\n")
+            printer.text("Sesion "+fila[1]+": "+str(fila[0])+"\n")
 
-        p.text('Boletos Expedidos: '+BEDespuesCorteImpre+'\n')
-        BAnterioresImpr=str(self.BAnteriores.get(),)#######
-        p.text("Boletos Turno Anterior: "+BAnterioresImpr+"\n")
-        AEE1 = self.DB.CuantosAutosdentro()
+        BolCobrImpresion=str(self.BoletosCobrados.get(),)
+        printer.text("Boletos Cobrados: "+BolCobrImpresion+"\n")
+
+        printer.text('Boletos Expedidos: '+BEDespuesCorteImpre+'\n')
+        BAnterioresImpr=str(self.BAnteriores.get(),)
+        printer.text("Boletos Turno Anterior: "+BAnterioresImpr+"\n")
+        AEE1 = self.DB.CuantosAutosdentro() 
         for fila in AEE1:
             AEE = fila[0]
-        BDentroImp = (AEE + int(BEDespuesCorteImpre)) - int(BolCobrImpresion)
-
-        p.text('Boletos Dejados: '+str(BDentroImp)+'\n')
+        BDentroImp = ((int(BAnterioresImpr) + int(BEDespuesCorteImpre))-(int(BolCobrImpresion)))    
+        #BDentroImp = (int(BolCobrImpresion)-(int(BAnterioresImpr) + int(BEDespuesCorteImpre)))   
+        #BDentroImp = (AEE + int(BEDespuesCorteImpre)) - int(BolCobrImpresion) #str(self.BDentro.get(),)
+        str(BDentroImp)
+        printer.text('Boletos dejados: '+str(BDentroImp)+'\n')
         AutosEnEstacImpre = str(self.AutosEnEstacionamiento.get(),)
-        p.text('------------------------------')
-        p.text('\n')
+        printer.text('------------------------------')
+        printer.text('\n')
 
         self.ImporteCorte.set("")
 
         self.DB.ActualizarEntradasConcorte(ActEntradas)
+        self.controlador_crud_pensionados.Actualizar_Entradas_Pension(maxnum)
         vobo='ant'
         self.DB.NocobradosAnt(vobo)
         ponercorte =int(maxnum) 
@@ -1265,22 +1401,46 @@ class FormularioOperacion:
         Numcorte=str(Numcorte)
 
         respuesta=self.DB.desglose_cobrados(Numcorte)
-        self.scrolledtxt2.delete("1.0", tk.END)
 
-
-
-        p.text("Cantidad e Importes "+'\n')
-        p.text("Cantidad - Tarifa - valor C/U - Total "+'\n')
+        printer.text("Cantidad e Importes "+'\n')
+        printer.text("Cantidad - Tarifa - valor C/U - Total "+'\n')
         for fila in respuesta:
-            self.scrolledtxt2.insert(tk.END, str(fila[0])+" Boletos con tarifa "+str(fila[1])+"\n"+"valor c/u $"+str(fila[2])+" Total $"+str(fila[3])+"\n\n")
-
-            p.text(f"  {str(fila[0])}  -  {str(fila[1])}  -  ${str(fila[2])}   -  ${str(fila[3])}\n")
+            printer.text(f"  {str(fila[0])}  -  {str(fila[1])}  -  ${str(fila[2])}   -  ${str(fila[3])}\n")
 
         else:
-            p.text("\n")
-            p.text(f"{BolCobrImpresion} Boletos        Suma total ${Im38}\n\n")    
+            printer.text("\n")
+            printer.text(f"{BolCobrImpresion} Boletos        Suma total ${Im38}\n\n")    
 
-        p.text("----------------------------------\n")
+        printer.text("----------------------------------\n")
+
+        desgloce_cancelados = self.DB.desgloce_cancelados(ponercorte)
+        if len(desgloce_cancelados) > 0:
+            printer.text("Boletos cancelados\n\n")
+
+            for boleto in desgloce_cancelados:
+                printer.text(f"Folio:{boleto[0]} - Motivo: {boleto[1]}\n")
+            printer.text("----------------------------------\n\n")
+
+        Entradas_Totales_Pensionados = self.controlador_crud_pensionados.get_Entradas_Totales_Pensionados(ponercorte)
+        Salidas_Pensionados = self.controlador_crud_pensionados.get_Salidas_Pensionados(ponercorte)
+        Anteriores_Pensionados = self.controlador_crud_pensionados.get_Anteriores_Pensionados(ponercorte-1)
+        
+        quedados_totales = Quedados_Pensionados - Anteriores_Pensionados
+
+        Quedados = 0 if quedados_totales < 0 else quedados_totales
+
+        if Entradas_Totales_Pensionados > 0 or Salidas_Pensionados > 0 or Quedados_Pensionados > 0:
+
+            printer.set(align="center")
+            printer.text("Entradas de pensionados\n\n")
+            printer.set(align="left")
+
+            printer.text(f"Anteriores: {Anteriores_Pensionados}\n")
+            printer.text(f"Entradas: {Entradas_Totales_Pensionados}\n")
+            printer.text(f"Salidas: {Salidas_Pensionados}\n")
+            printer.text(f"Quedados: {Quedados}\n")
+
+            printer.text("----------------------------------\n\n")
 
         # Obtiene la cantidad de boletos perdidos generados
         Boletos_perdidos_generados = self.DB.Boletos_perdidos_generados()
@@ -1303,205 +1463,189 @@ class FormularioOperacion:
         # Si hay boletos perdidos generados, cobrados o no cobrados, se procede a imprimir el reporte
         if Boletos_perdidos_generados > 0 or Boletos_perdidos_cobrados > 0 or Boletos_perdidos_no_cobrados > 0:
             # Imprime el encabezado de la seccion de boletos perdidos
-            p.text("BOLETOS PERDIDOS"+'\n\n')
+            printer.text("BOLETOS PERDIDOS"+'\n\n')
 
             # Imprime la cantidad de boletos perdidos generados y su desglose
-            p.text(f"Boletos perdidos generados: {Boletos_perdidos_generados + Boletos_perdidos_cobrados}" + '\n')
+            printer.text(f"Boletos perdidos generados: {Boletos_perdidos_generados + Boletos_perdidos_cobrados}" + '\n')
             for boleto in Boletos_perdidos_cobrados_desglose:
-                p.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
+                printer.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
             for boleto in Boletos_perdidos_generados_desglose:
-                p.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
+                printer.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
 
             # Imprime separador
-            p.text("**********************************\n")
+            printer.text("**********************************\n")
 
             # Imprime la cantidad de boletos perdidos cobrados y su desglose
-            p.text(f"Boletos perdidos cobrados: {Boletos_perdidos_cobrados}" + '\n\n')
+            printer.text(f"Boletos perdidos cobrados: {Boletos_perdidos_cobrados}" + '\n\n')
             for boleto in Boletos_perdidos_cobrados_desglose:
-                p.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\nFecha salida:{boleto[2]}\n")
-            p.text("**********************************\n")
+                printer.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\nFecha salida:{boleto[2]}\n")
+            printer.text("**********************************\n")
 
             # Imprime la cantidad de boletos perdidos no cobrados y su desglose
-            p.text(f"Boletos perdidos quedados: {Boletos_perdidos_no_cobrados}" + '\n\n')
+            printer.text(f"Boletos perdidos quedados: {Boletos_perdidos_no_cobrados}" + '\n\n')
             for boleto in Boletos_perdidos_generados_desglose:
-                p.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
+                printer.text(f"Folio:{boleto[0]}\nFecha entrada:{boleto[1]}\n")
 
             # Imprime separador
-            p.text("----------------------------------\n")
+            printer.text("----------------------------------\n")
 
         # Obtiene la cantidad e importes de las pensiones para el corte actual
         respuesta = self.DB.total_pensionados_corte(Numcorte)
 
         # Si hay pensionados en el corte, se procede a imprimir la seccion correspondiente
         if len(respuesta) > 0:
-            p.text("Cantidad e Importes Pensiones" + '\n')
-            p.text("Cuantos - Concepto - ImporteTotal " + '\n')
+            printer.text("Cantidad e Importes Pensiones" + '\n')
+            printer.text("Cuantos - Concepto - ImporteTotal " + '\n')
             for fila in respuesta:
-                p.text(f"   {str(fila[0])}   -  {str(fila[1])}   -   ${str(fila[2])}\n")
+                printer.text(f"   {str(fila[0])}   -  {str(fila[1])}   -   ${str(fila[2])}\n")
             else:
-                p.text("----------------------------------\n")
+                printer.text("----------------------------------\n")
 
-        # Imprime un separador final
-        p.text("----------------------------------\n")
+        # Imprime ultimo separador
+        printer.text("----------------------------------\n")
 
         # Corta el papel
-        p.cut()
-        p.close()
+        printer.cut()
+        printer.close()
 
         # Cierra el programa al final del reporte
         self.Cerrar_Programa()
 
 
     def Cerrar_Programa(self):
-        self.ventana1.destroy()
+        self.root.destroy()
 
 
 
     def Reporte_Corte(self):
-        contrasena = str(self.entryClave2.get(), )
-        ##simpledialog.askinteger("Contrasena", "Capture su Contrasena:",
-                                 ##parent=self.labelframe4) # minvalue=8, maxvalue=8
-        if len(contrasena) == 0:
-            mb.showwarning("IMPORTANTE", "Capturar: La CLAVE para ejecutar las acciones")
-            self.entryClave2.focus()
-        elif contrasena == "13579" :
-            #try:
-                mes=self.comboMesCorte.get()
-                Ano=int(self.entryAnoCorte.get(), )
-                if Ano is None :
-                    mb.showwarning("IMPORTANTE", "Debe capturar el Ano del reporte")
-                    return False
-                elif Ano <= 0 :
-                    mb.showwarning("IMPORTANTE", "Distribucion debe ser un numero positivo mayor a cero")
-                    return False
-                else :
-                    Libro = '/home/pi/Documents/Cobro/XlsCorte/Rpte Corte '+ str(mes)+'-'+str(Ano)+'  '+str(datetime.now().date())+'.xlsx' #+'/' '/home/pi/Documents/electrofloculacion/belen/Prueba/RPTCORTE.xlsx'
-                    datos=(mes, Ano)
-                    #Obtenemos Fecha (Inicialy Final) del mes que solicita el reporte
-                    CorteMaxMin=self.DB.Cortes_MaxMin(datos)
-                    for fila in CorteMaxMin:
-                       UltFecha=fila[0]
-                       IniFecha=fila[1]
-                       FinFecha=fila[2]
-                    #Obtenemos Primer y Ultimo Folio de Cortes del Mes que se solicita el reporte
-                    datos=(IniFecha)
-                    CorteIni=self.DB.Cortes_Folio(datos)
-                    datos=(UltFecha)
-                    #CorteFin=self.DB.Cortes_FolioFin(datos)
-                    CorteFin=self.DB.Cortes_Folio(datos)
-                    #Obtnemos los Registros entre estos dos Folios para el cuerpo del reporte
-                    datos=(CorteIni, CorteFin)
-                    #datos=(IniFecha, UltFecha)
-                    Registros=self.DB.Registros_corte(datos)
-                    TotalesCorte=self.DB.Totales_corte(datos)
-                    ResumenPromo=self.DB.Resumen_promo(datos)
-                    workbook = xlsxwriter.Workbook(Libro)
-                    worksheet = workbook.add_worksheet('CORTE')
-                    #Definimos Encabezado Principal
-                    #Obtenemos imagen del Encabezado
-                    worksheet.insert_image('A3', '/home/pi/Documents/Cobro/LOGO NEW.jpg') #,{'x_scale': 0.20, 'y_scale': 0.20} Insert de Logo (imagen.png)
-                    #Definimos Formatos de celda del encabezado
-                    cell_format0 = workbook.add_format()
-                    cell_format0 = workbook.add_format({'bold': True,'align':'right'})
-                    cell_format1 = workbook.add_format()
-                    cell_format1 = workbook.add_format({'bold': True,'align':'right','num_format':'$#,##0.00', 'bg_color':'#D9D9D9'})
-                    cell_format2 = workbook.add_format() #{'num_format': 'dd/mm/yy'}
-                    cell_format2.set_num_format('dd/mm/yy h:mm:ss')  # Format string.
-                    cell_format3 = workbook.add_format()
-                    cell_format3 = workbook.add_format({'bold': True, 'align':'center','size': 15})
-                    cell_format4 = workbook.add_format()
-                    cell_format4 = workbook.add_format({'bold': True, 'align':'center'})
-                    cell_format5 = workbook.add_format()
-                    cell_format5 = workbook.add_format({'align':'right','num_format':'$#,##0.00'})
-                    cell_format6 = workbook.add_format()
-                    cell_format6= workbook.add_format({'align':'right','num_format':'#,##0'})
-                    #Colocamos Resumen x Promoci[on en Encabezado
-                    worksheet.write('E2', 'PROM', cell_format4)
-                    worksheet.write('F2', 'CANT.', cell_format4)
-                    worksheet.write('G2', 'TOTAL X PROMCION', cell_format4)
-                    row=2
-                    col=4
-                    for fila in ResumenPromo:
-                        #print(str(fila[0]))
-                        worksheet.write(row, col,   fila[1]) #Nombre de la Promo A12
-                        worksheet.write(row, col+1, fila[0],cell_format6) #Numero de Folios por Promocion B12
-                        worksheet.write(row, col+2, fila[3],cell_format5) #Monto Total por Promocion C12
-                        row += 1
-                    #Colocamos Totales del Encabezado
-                    row=row+1
-                    worksheet.write('C3', 'REPORTE DE CORTE', cell_format3) #Aqui debe ir el nombre de la sucursal pero de d[onde lo obtengo?
-                    worksheet.write('E'+str(row), 'TOTAL:',cell_format4)
-                    worksheet.write('F'+str(row+1), 'PERIODO',cell_format4)
-                    worksheet.write('F'+str(row+2), 'Inicio')#f5
-                    worksheet.write('F'+str(row+3), 'Fin')#f6
-                    worksheet.write('F'+str(row+4), 'Cortes')#f7
-                    worksheet.write('F'+str(row+5), 'Suma del Periodo:', cell_format0)#f8
-                    worksheet.write('G'+str(row+2), IniFecha, cell_format2)#g5
-                    worksheet.write('G'+str(row+3), UltFecha, cell_format2)#g6
-                    for fila in TotalesCorte:
-                        #print(str(fila[3]))
-                        worksheet.write('G'+str(row), fila[0], cell_format5)#Total de Cobros en resumen
-                        worksheet.write('F'+str(row), fila[3], cell_format6)#Total de Folios en Resumen
-                        worksheet.write('G'+str(row+5), fila[0], cell_format1)# Total de cobros Encabezado
-                        worksheet.write('G'+str(row+4),str(fila[2]) +" al "+ str(fila[1]))
-                    #Definimos Formato y Ancho de Fila Encabezado del cuerpo del reporte
-                    cell_format = workbook.add_format({'bold': True, 'align':'center', 'text_wrap':True, 'border':1, 'pattern':1, 'bg_color':'#D9D9D9'}) #808080
-                    worksheet.set_row(row+7, 34)
-                    #worksheet.set_row(10, 34)
-                    #Definimos anchos de Columna del cuerpo del reporte
-                    worksheet.set_column(0, 0, 10)
-                    worksheet.set_column(1, 2, 30)
-                    worksheet.set_column(3, 4, 14)
-                    worksheet.set_column(5, 5, 13)
-                    worksheet.set_column(6, 6, 30)
-                    worksheet.set_column(7, 7, 10)
-                    #Definimos Nombres de columnas del cuerpo del reporte
-                    worksheet.write('A'+str(row+8), 'FOLIO', cell_format)
-                    worksheet.write('B'+str(row+8), 'FECHA Y HORA ENT', cell_format)
-                    worksheet.write('C'+str(row+8), 'FECHA Y HORA SAL', cell_format)
-                    worksheet.write('D'+str(row+8), 'TIEMPO', cell_format)
-                    worksheet.write('E'+str(row+8), 'PRECIO', cell_format)
-                    worksheet.write('F'+str(row+8), 'CORTES', cell_format)
-                    worksheet.write('G'+str(row+8), 'DESCRIPCION', cell_format)
-                    worksheet.write('H'+str(row+8), 'PROM', cell_format)
-                    #Definimos Formatos de celda para datos del cuerpo del reporte
-                    cell_format7 = workbook.add_format() #{'num_format': 'hh:mm:ss'}
-                    cell_format7 = workbook.add_format({'align':'right','num_format':'h:mm:ss'})
-                    row=row+8
-                    col=0
-                    for fila in Registros:
-                        #MontoTt= fila[0]
-                        worksheet.write(row, col,   fila[0]) #Folio A12
-                        worksheet.write(row, col+1, fila[1],cell_format2) #Fecha Hora Entrada B12
-                        worksheet.write(row, col+2, fila[2],cell_format2) #Fecha Hora Salida C12
-                        worksheet.write(row, col+3, fila[3],cell_format7) #Tiempo D12
-                        worksheet.write(row, col+4, fila[4],cell_format5) #Precio E12
-                        worksheet.write(row, col+5, fila[5]) #Cortes F12
-                        worksheet.write(row, col+6, fila[6]) #Descripcion G12
-                        worksheet.write(row, col+7, fila[7]) #Promociones H12
-                        row += 1
-                    workbook.close()
-                    mb.showinfo("Reporte de Corte",'Reporte Guardado')
-            #except:
-                #print('lo que escribiste no es un entero')
-                #mb.showwarning("IMPORTANTE", "Ha ocurrido un error: Revise los datos capturados")
-        else:
-            mb.showwarning("ERROR", 'Contrasena Incorrecta')
+        contrasena = simpledialog.askinteger("Contrasena", "Capture su Contrasena:", parent=self.labelframe4) # minvalue=8, maxvalue=8
+        if contrasena is not None:
+            if contrasena == 13579 :
+                #mb.showinfo("Contrasena Correcta ", contrasena)
+                try:
+                    mes=self.comboMesCorte.get()
+                    Ano=int(self.entryAnoCorte.get(), )
+                    #mb.showinfo("msj uno",mes)
+                    #mb.showinfo("msj dos",Ano)
+                    if Ano is None :
+                        mb.showwarning("IMPORTANTE", "Debe capturar el Ano del reporte")
+                        return
+                    elif Ano <= 0 :
+                        mb.showwarning("IMPORTANTE", "Distribucion debe ser un numero positivo mayor a cero")
+                        return
+                    else :
+                        Libro = '/home/pi/Documents/XlsCorte'+ str(mes)+'-'+str(Ano)+'  '+str(datetime.now().date())+'.xlsx' 
+                        #mb.showinfo("msj uno",mes)
+                        #mb.showinfo("msj dos",Ano)
+                        datos=(mes, Ano)
+                        #Obtenemos Fecha (Inicialy Final) del mes que solicita el reporte
+                        CorteMaxMin=self.DB.Cortes_MaxMin(datos)
+                        for fila in CorteMaxMin:
+                            UltFecha=fila[0] 
+                            IniFecha=fila[1]                      
+                        #Obtenemos Primer y Ultimo Folio de Cortes del Mes que se solicita el reporte
+                        datos=(IniFecha)
+                        CorteIni=self.DB.Cortes_Folio(datos)
+                        #mb.showinfo("msj uno",UltFecha)
+                        datos=(UltFecha)
+                        #CorteFin=self.DB.Cortes_FolioFin(datos)
+                        #mb.showinfo("msj uno",CorteFin)
+                        CorteFin=self.DB.Cortes_Folio(datos)
+                        #mb.showinfo("msj uno",CorteIni)
+                        #mb.showinfo("msj dos",CorteFin)
+                        #Obtnemos los Registros entre estos dos Folios para el cuerpo del reporte       
+                        datos=(CorteIni, CorteFin)
+                        #datos=(IniFecha, UltFecha)
+                        Registros=self.DB.Registros_corte(datos)
+                        TotalesCorte=self.DB.Totales_corte(datos)
+                        workbook = xlsxwriter.Workbook(Libro)
+                        worksheet = workbook.add_worksheet('CORTE')
+                        #Definimos Encabezado Principal
+                        #Obtnemos imagen del Encabezado
+                        worksheet.insert_image('A1', 'LOGO.jpg',{'x_scale': 0.85, 'y_scale': 0.85}) #Insert de Logo (imagen.png)
+                        cell_format0 = workbook.add_format()
+                        cell_format0 = workbook.add_format({'align':'right','bold': True})
+                        cell_format3 = workbook.add_format()
+                        cell_format3 = workbook.add_format({'bold': True, 'size': 14})
+                        cell_format4 = workbook.add_format()
+                        cell_format4 = workbook.add_format({'bold': True, 'align':'center'})        
+                        worksheet.write('C3', 'REPORTE DE CORTE', cell_format3) #Aqui debe ir el nombre de la sucursal pero de d[onde lo obtengo?
+                        worksheet.write('F4', 'PERIODO',cell_format4)
+                        worksheet.write('F5', 'Inicio')
+                        worksheet.write('F6', 'Fin')
+                        worksheet.write('F7', 'Cortes')
+                        worksheet.write('F8', 'Suma del Periodo:', cell_format0)
+                        #Definimos Formatos de celda del encabezado
+                        cell_format1 = workbook.add_format()
+                        cell_format1 = workbook.add_format({'bold': True,'align':'right','num_format':'$#,##0.00', 'bg_color':'#D9D9D9'})
+                        cell_format2 = workbook.add_format() #{'num_format': 'dd/mm/yy'}
+                        cell_format2.set_num_format('dd/mm/yy h:mm:ss')  # Format string.
+                        #Colocamos Totales del Encabezado
+                        worksheet.write('G5', IniFecha, cell_format2)
+                        worksheet.write('G6', UltFecha, cell_format2)
+                        for fila in TotalesCorte:
+                            worksheet.write('G8', fila[0], cell_format1)
+                            worksheet.write('G7',str(fila[2]) +" al "+ str(fila[1]))
+                        #mb.showinfo("msj Totale",str(fila[2]))
+                        
+                        #Definimos Formato y Ancho de Fila Encabezado del cuerpo del reporte      
+                        cell_format = workbook.add_format({'bold': True, 'align':'center', 'text_wrap':True, 'border':1, 'pattern':1, 'bg_color':'#D9D9D9'}) #808080      
+                        worksheet.set_row(10, 34, cell_format)
+                        #Definimos anchos de Columna del cuerpo del reporte
+                        worksheet.set_column(0, 0, 10)
+                        worksheet.set_column(1, 2, 30)
+                        worksheet.set_column(3, 4, 14)
+                        worksheet.set_column(5, 5, 13)
+                        worksheet.set_column(6, 6, 30)
+                        worksheet.set_column(7, 7, 10)
+                        #Definimos Nombres de columnas del cuerpo del reporte
+                        worksheet.write('A11', 'FOLIO')
+                        worksheet.write('B11', 'FECHA Y HORA ENT')
+                        worksheet.write('C11', 'FECHA Y HORA SAL')
+                        worksheet.write('D11', 'TIEMPO')
+                        worksheet.write('E11', 'PRECIO')
+                        worksheet.write('F11', 'CORTES')
+                        worksheet.write('G11', 'DESCRIPCION')
+                        worksheet.write('H11', 'PROM')
+                        #Definimos Formatos de celda para datos del cuerpo del reporte
+                        cell_format3 = workbook.add_format() #{'num_format': 'hh:mm:ss'}
+                        #cell_format3.set_num_format({'align':'right','h:mm:ss'})  # Format string.
+                        cell_format3 = workbook.add_format({'align':'right','num_format':'h:mm:ss'})
+                        cell_format4 = workbook.add_format()
+                        cell_format4 = workbook.add_format({'align':'right','num_format':'$#,##0'})
+                        row=11
+                        col=0
+                        for fila in Registros:
+                            worksheet.write(row, col,   fila[0]) #Folio A12
+                            worksheet.write(row, col+1, fila[1],cell_format2) #Fecha Hora Entrada B12
+                            worksheet.write(row, col+2, fila[2],cell_format2) #Fecha Hora Salida C12
+                            worksheet.write(row, col+3, fila[3],cell_format3) #Tiempo D12
+                            worksheet.write(row, col+4, fila[4],cell_format4) #Precio E12
+                            worksheet.write(row, col+5, fila[5]) #Cortes F12
+                            worksheet.write(row, col+6, fila[6]) #Descripcion G12
+                            worksheet.write(row, col+7, fila[7]) #Promociones H12
+                            row += 1
+                        workbook.close()       
+                        mb.showinfo("Reporte de Corte",'Reporte Guardado')     
+                except:
+                    print('lo que escribiste no es un entero')
+                    mb.showwarning("IMPORTANTE", "Ha ocurrido un error: Revise los datos capturados")                        
+            else:
+                mb.showwarning("ERROR", 'Contrasena Incorrecta')
 
 
-        
     def Puertoycontar(self):
         
         CuantosBoletosCobro=str(self.DB.CuantosBoletosCobro())
         CuantosBoletosCobro = CuantosBoletosCobro.strip('(),')
         self.BoletosCobrados.set(CuantosBoletosCobro)
+        MaxFolioCorte=str(self.DB.Maxfolio_Cortes())
         BEDCorte=str(self.DB.BEDCorte())
         BEDCorte = BEDCorte.strip('(),')
         self.BEDespuesCorte.set(BEDCorte)
         BAnteriores=str(self.DB.BAnteriores())
         BAnteriores = BAnteriores.strip('(),')
         self.BAnteriores.set(BAnteriores)
-        MaxFolioCorte=str(self.DB.Maxfolio_Cortes())
         MaxFolioCorte=MaxFolioCorte.strip('(),')
         QuedadosBol=str(self.DB.Quedados_Sensor(MaxFolioCorte))
         QuedadosBol=QuedadosBol.strip('(),')
@@ -1536,40 +1680,40 @@ class FormularioOperacion:
         self.cuaderno1.add(self.pagina4, text="Modulo Pensionados")
         #enmarca los controles LabelFrame 
         labelframe_pensionados = tk.LabelFrame(self.pagina4, text="Pensionados")
-        labelframe_pensionados.grid(column=0, row=0, padx=5, pady=5, sticky=tk.NW)
+        labelframe_pensionados.grid(column=0, row=0, padx=2, pady=5, sticky=tk.NW)
 
         label_frame_datos_pago = tk.Frame(labelframe_pensionados)
-        label_frame_datos_pago.grid(column=0, row=0, padx=5, pady=5, sticky=tk.NW)
+        label_frame_datos_pago.grid(column=0, row=0, padx=2, pady=5, sticky=tk.NW)
 
         ######Pago, Vigencia y Numero de tarjeta
         labelframe_pensionados_datos_pago=tk.LabelFrame(label_frame_datos_pago, text="Datos de pago")
-        labelframe_pensionados_datos_pago.grid(column=0, row=0, padx=5, sticky=tk.NW)
+        labelframe_pensionados_datos_pago.grid(column=0, row=0, padx=2, sticky=tk.NW)
 
         labelframe_pensionados_datos_pago__=tk.Frame(labelframe_pensionados_datos_pago)
         labelframe_pensionados_datos_pago__.grid(column=0, row=0)
 
-        lbldatos20=ttk.Label(labelframe_pensionados_datos_pago__, text="Num. Tarjeta:")
+        lbldatos20=tk.Label(labelframe_pensionados_datos_pago__, text="Num. Tarjeta:")
         lbldatos20.grid(column=0, row=0, padx=4, pady=4)
         self.variable_numero_tarjeta=tk.StringVar()
-        self.caja_texto_numero_tarjeta=ttk.Entry(labelframe_pensionados_datos_pago__, width=15, textvariable=self.variable_numero_tarjeta)
+        self.caja_texto_numero_tarjeta=ttk.Entry(labelframe_pensionados_datos_pago__, width=15, textvariable=self.variable_numero_tarjeta, justify='center')
         self.caja_texto_numero_tarjeta.grid(column=1, row=0, padx=4, pady=4)
 
-        boton_consultar_pensionado=tk.Button(labelframe_pensionados_datos_pago__, text="Consultar", command=self.ConsulPagoPen, width=12, height=1, anchor="center",  font=("Arial", 10), background="red")
+        boton_consultar_pensionado=tk.Button(labelframe_pensionados_datos_pago__, text="Consultar", command=self.ConsulPagoPen, width=12, height=1, anchor="center",  font=("Arial", 10), background=button_color, fg=button_letters_color)
         boton_consultar_pensionado.grid(column=4, row=0, padx=4, pady=4)     
 
-        lbldatos16=ttk.Label(labelframe_pensionados_datos_pago__, text="Monto Mensual:")#informativo
+        lbldatos16=tk.Label(labelframe_pensionados_datos_pago__, text="Monto Mensual:")#informativo
         lbldatos16.grid(column=0, row=1, padx=4, pady=4)
         self.Monto=tk.StringVar()
-        entryMonto=ttk.Entry(labelframe_pensionados_datos_pago__, width=10, textvariable=self.Monto, state="readonly")
+        entryMonto=ttk.Entry(labelframe_pensionados_datos_pago__, width=10, textvariable=self.Monto, state="readonly", justify='center')
         entryMonto.grid(column=1, row=1)
 
-        etiqueta_vigencia=ttk.Label(labelframe_pensionados_datos_pago__, text="Vigencia:")
+        etiqueta_vigencia=tk.Label(labelframe_pensionados_datos_pago__, text="Vigencia:")
         etiqueta_vigencia.grid(column=3, row=1, padx=4, pady=4)
         self.Vigencia=tk.StringVar()
         cata_texto_vigencia=ttk.Entry(labelframe_pensionados_datos_pago__, width=15, textvariable=self.Vigencia, state="readonly")
         cata_texto_vigencia.grid(column=4, row=1, padx=4, pady=4)
 
-        lbldatos17=ttk.Label(labelframe_pensionados_datos_pago__, text="Mensualidades a Pagar:")
+        lbldatos17=tk.Label(labelframe_pensionados_datos_pago__, text="Mensualidades a Pagar:")
         lbldatos17.grid(column=0, row=2, padx=4, pady=4)
 
         self.meses_pago = tk.StringVar()
@@ -1578,16 +1722,16 @@ class FormularioOperacion:
         self.comboMensual.current(0)
         self.comboMensual.grid(column=1, row=2, padx=4, pady=4)
 
-        etiqueta_estatus=ttk.Label(labelframe_pensionados_datos_pago__, text="Estatus:")
+        etiqueta_estatus=tk.Label(labelframe_pensionados_datos_pago__, text="Estatus:")
         etiqueta_estatus.grid(column=3, row=2, padx=4, pady=4)  
         self.Estatus=tk.StringVar()
-        cata_texto_estatus=ttk.Entry(labelframe_pensionados_datos_pago__, width=15, textvariable=self.Estatus, state="readonly")
+        cata_texto_estatus=ttk.Entry(labelframe_pensionados_datos_pago__, width=15, textvariable=self.Estatus, state="readonly", justify='center')
         cata_texto_estatus.grid(column=4, row=2, padx=4, pady=4)
 
         label_frame_informacion = tk.Frame(labelframe_pensionados_datos_pago)
         label_frame_informacion.grid(column=0, row=2)
 
-        self.etiqueta_informacion = ttk.Label(label_frame_informacion, text="", font=("Arial", 11))
+        self.etiqueta_informacion = tk.Label(label_frame_informacion, text="", font=("Arial", 11))
         self.etiqueta_informacion.grid(column=0, row=0)
 
 
@@ -1611,31 +1755,31 @@ class FormularioOperacion:
         checkbox_transferencia.grid(column=0, row=1, padx=0, pady=0, sticky=tk.NW)
 
 
-        boton2=tk.Button(label_frame_tipo_pago, text="Cobrar Pension", command=self.Cobro_Pensionado, width=12, height=1, anchor="center",  font=("Arial", 10), background="red")
+        boton2=tk.Button(label_frame_tipo_pago, text="Cobrar Pension", command=self.Cobro_Pensionado, width=12, height=1, anchor="center",  font=("Arial", 10), background=button_color, fg=button_letters_color)
         boton2.grid(column=0, row=3, padx=4, pady=4)
 
-        self.etiqueta_informacion_pago = ttk.Label(label_frame_tipo_pago, text="", font=("Arial", 11))
+        self.etiqueta_informacion_pago = tk.Label(label_frame_tipo_pago, text="", font=("Arial", 11))
         self.etiqueta_informacion_pago.grid(column=0, row=4)    
 
 
 
         labelframe_pensionados_acciones = tk.LabelFrame(labelframe_pensionados, text="Acciones")
-        labelframe_pensionados_acciones.grid(column=1, row=0, padx=5, pady=5, sticky=tk.NW)
+        labelframe_pensionados_acciones.grid(column=1, row=0, padx=2, pady=5, sticky=tk.NW)
 
-        self.boton_agregar_pensionado=tk.Button(labelframe_pensionados_acciones, text="Agregar Pensionado", anchor="center", font=("Arial", 12), width=27, command=self.agregar_pensionado)
-        self.boton_agregar_pensionado.grid(column=0, row=0, padx=5, pady=5, sticky=tk.NW)
+        self.boton_agregar_pensionado=tk.Button(labelframe_pensionados_acciones, background=button_color, fg=button_letters_color, text="Agregar Pensionado", anchor="center", font=("Arial", 12), width=27, command=self.agregar_pensionado)
+        self.boton_agregar_pensionado.grid(column=0, row=0, padx=2, pady=5, sticky=tk.NW)
      
-        self.boton_modificar_pensionado=tk.Button(labelframe_pensionados_acciones, text="Modificar info Pensionado", anchor="center", command=self.modificar_pensionado, font=("Arial", 12), width=27)
-        self.boton_modificar_pensionado.grid(column=0, row=1, padx=5, pady=5, sticky=tk.NW)
+        self.boton_modificar_pensionado=tk.Button(labelframe_pensionados_acciones, background=button_color, fg=button_letters_color, text="Modificar info Pensionado", anchor="center", command=self.modificar_pensionado, font=("Arial", 12), width=27)
+        self.boton_modificar_pensionado.grid(column=0, row=1, padx=2, pady=5, sticky=tk.NW)
 
         labelframe_pensionados_acciones_contraseña = ttk.Frame(labelframe_pensionados_acciones)
         labelframe_pensionados_acciones_contraseña.grid(column=0, row=2)
 
-        lbldatos21=ttk.Label(labelframe_pensionados_acciones_contraseña, text="Contraseña", font=("Arial", 10))
+        lbldatos21=tk.Label(labelframe_pensionados_acciones_contraseña, text="Contraseña", font=("Arial", 10))
         lbldatos21.grid(column=0, row=0, padx=4, pady=4)
 
         self.variable_contraseña_pensionados=tk.StringVar()
-        self.campo_texto_contraseña_pensionados=ttk.Entry(labelframe_pensionados_acciones_contraseña, width=20, textvariable=self.variable_contraseña_pensionados, show="*", font=("Arial", 10))
+        self.campo_texto_contraseña_pensionados=ttk.Entry(labelframe_pensionados_acciones_contraseña, width=20, textvariable=self.variable_contraseña_pensionados, show="*", font=("Arial", 10), justify='center')
         self.campo_texto_contraseña_pensionados.grid(column=1, row=0, padx=4, pady=4)
 
        
@@ -1643,15 +1787,15 @@ class FormularioOperacion:
 
         ######Muestra de Pensionados Adentro
         labelframe_pensionados_dentro = tk.LabelFrame(labelframe_pensionados, text="Pensionados Adentro")
-        labelframe_pensionados_dentro.grid(column=1, row=1, padx=5, pady=5)
+        labelframe_pensionados_dentro.grid(column=1, row=1, padx=2, pady=5)
 
-        self.lbldatosTotPen=ttk.Label(labelframe_pensionados_dentro, text="")
+        self.lbldatosTotPen=tk.Label(labelframe_pensionados_dentro, text="")
         self.lbldatosTotPen.grid(column=0, row=0, padx=4, pady=4)        
 
-        boton5=tk.Button(labelframe_pensionados_dentro, text="Actualizar", command=self.PenAdentro, width=28, height=1, anchor="center", font=("Arial", 10), background="red")
+        boton5=tk.Button(labelframe_pensionados_dentro, text="Actualizar", command=self.PenAdentro, width=28, height=1, anchor="center", font=("Arial", 10), background=button_color, fg=button_letters_color)
         boton5.grid(column=0, row=1, padx=4, pady=4)
 
-        self.scroll_pensionados_dentro = st.ScrolledText(labelframe_pensionados_dentro, width=28, height=18)
+        self.scroll_pensionados_dentro = st.ScrolledText(labelframe_pensionados_dentro, width=28, height=10)
         self.scroll_pensionados_dentro.grid(column=0,row=2, padx=10, pady=10)
 
 
@@ -1662,7 +1806,7 @@ class FormularioOperacion:
         labelframe_pensionados.rowconfigure(1, weight=1)
 
         labelframe_tabla_pensionados = tk.LabelFrame(labelframe_pensionados, text="Tabla pensionados")
-        labelframe_tabla_pensionados.grid(column=0, row=1, padx=5, pady=5, sticky='NSEW')
+        labelframe_tabla_pensionados.grid(column=0, row=1, padx=2, pady=5, sticky='NSEW')
 
         labelframe_tabla_pensionados.columnconfigure(0, weight=1)
         labelframe_tabla_pensionados.rowconfigure(0, weight=1)
@@ -1672,8 +1816,8 @@ class FormularioOperacion:
 
         # Crea un Treeview con una columna por cada campo de la tabla
         self.tabla = ttk.Treeview(labelframe_tabla_pensionados, columns=columnas)
-        self.tabla.config(height=8)
-        self.tabla.grid(row=0, column=0, sticky='NSEW', padx=5, pady=5)
+        self.tabla.config(height=4)
+        self.tabla.grid(row=0, column=0, sticky='NSEW', padx=2, pady=5)
 
         # Define los encabezados de columna
         i = 1
@@ -1690,7 +1834,7 @@ class FormularioOperacion:
         self.tabla.column('#5', width=120, stretch=False)
         self.tabla.column('#6', width=75, stretch=False)
         self.tabla.column('#7', width=0, stretch=False)
-        self.tabla.column('#8', width=100, stretch=False)
+        self.tabla.column('#8', width=75, stretch=False)
 
         # Crea un Scrollbar vertical y lo asocia con el Treeview
         scrollbar_Y = ttk.Scrollbar(labelframe_tabla_pensionados, orient='vertical', command=self.tabla.yview)
@@ -1703,7 +1847,7 @@ class FormularioOperacion:
         scrollbar_X.grid(row=1, column=0, sticky='EW')
 
         # Empaqueta el Treeview en el labelframe
-        self.tabla.grid(row=0, column=0, sticky='NSEW', padx=5, pady=5)
+        self.tabla.grid(row=0, column=0, sticky='NSEW', padx=2, pady=5)
 
         self.tarjetas_expiradas()
         self.ver_pensionados()
@@ -1763,18 +1907,23 @@ class FormularioOperacion:
         if Estatus == "Inactiva":
             # Cálculo del pago con penalizacion para estatus Inactiva
             pago = self.calcular_pago_media_pension(monto)
-            total = pago + valor_tarjeta
+            valor_tarjeta_pension = valor_tarjeta
+            if cortesia == "Si":
+                pago = 0
+                valor_tarjeta_pension = 0
+            total = pago + valor_tarjeta_pension
             self.etiqueta_informacion.configure(text="Tarjeta desactivada")
-            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada, por lo que el pensionado solo pagará los dias faltantes del mes junto al precio de la tarjeta, posteriormente solo pagará el valor registrado de la pension.\n\nPago pension: {pago}\nPago tarjeta:    {valor_tarjeta}\nPago total:        {total}")
+            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada, por lo que el pensionado solo pagará los dias faltantes del mes junto al precio de la tarjeta, posteriormente solo pagará el valor registrado de la pension.\n\nPago pension: {pago}\nPago tarjeton:    {valor_tarjeta_pension}\nPago total:        {total}")
             pago = total
 
         elif Estatus == "InactivaPerm":
             # Cálculo del pago con penalizacion para estatus InactivaPerm
+            valor_tarjeta_pension = valor_tarjeta
             pago_mensualidad = monto * nummes
-            total = pago_mensualidad + valor_tarjeta
+            total = pago_mensualidad + valor_tarjeta_pension
 
             self.etiqueta_informacion.configure(text="Tarjeta desactivada de forma permanente")
-            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada de forma permanente, por lo que el pensionado pagará una penalizacion correspondiente al precio de la tarjeta ademas de su respectiva mensualidad.\n\nPago pension: {pago_mensualidad}\nPenalizacion:    {valor_tarjeta}\nPago total:        {total}")
+            mb.showwarning("IMPORTANTE", f"La tarjeta esta desactivada de forma permanente, por lo que el pensionado pagará una penalizacion correspondiente al precio de la tarjeta ademas de su respectiva mensualidad.\n\nPago pension: {pago_mensualidad}\nPenalizacion:    {valor_tarjeta_pension}\nPago total:        {total}")
             pago = total
 
         elif Estatus == "InactivaTemp":
@@ -1873,18 +2022,24 @@ class FormularioOperacion:
             Tolerancia = int(cliente[17])
 
             fechaPago = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+            pago = 0
             if Estatus == "Inactiva":
                 pago = self.calcular_pago_media_pension(monto)
                 total = pago + valor_tarjeta
                 pago = total
+                if cortesia == "Si":
+                    pago = 0
 
             elif Estatus == "InactivaPerm":
+                if cortesia == "Si":
+                    pago = 0
                 pago = monto * nummes
                 total = pago + valor_tarjeta
                 pago = total
 
             elif Estatus == "InactivaTemp":
+                if cortesia == "Si":
+                    pago = 0
                 pago_mensualidad = monto * nummes
                 pago = pago_mensualidad
 
@@ -1902,7 +2057,7 @@ class FormularioOperacion:
                 # Convertir la cadena de caracteres en un objeto datetime
                 hoy = datetime.strptime(hoy, "%Y-%m-%d %H:%M:%S")
 
-                limite = VigAct + timedelta(days=Tolerancia)
+                limite = self.get_date_limit(VigAct, Tolerancia)
                 print(limite)
 
                 penalizacion_pension = 0
@@ -1914,9 +2069,12 @@ class FormularioOperacion:
 
                 pago = (monto * nummes) + penalizacion_pension
 
-            if cortesia == "Si":NvaVigencia = self.nueva_vigencia(
+            if cortesia == "Si":
+                pago = 0
+                NvaVigencia = self.nueva_vigencia(
                     fecha= VigAct,
                     cortesia="Si")
+                
             else:NvaVigencia = self.nueva_vigencia(
                     fecha= VigAct,
                     meses=nummes)
@@ -1996,32 +2154,34 @@ class FormularioOperacion:
         Raises:
             None
         """
+        printer = Usb(0x04b8, 0x0e15, 0)
         # Establece la alineacion del texto al centro
-        p.set(align="center")
+        printer.set(align="center")
 
-        p.text("----------------------------------\n")
+        printer.text("----------------------------------\n")
         # Agrega un encabezado al comprobante
-        p.text("        Comprobante de pago\n\n")
+        printer.text("Comprobante de pago\n\n")
         
         # Establece la alineacion del texto a la izquierda
-        p.set(align="left")
+        printer.set(align="left")
 
         # Agrega informacion sobre el pago al comprobante
-        p.image(logo_1)
-        p.text(f"Numero de tarjeta: {numero_tarjeta}\n")
-        p.text(f"Nombre: {Nom_cliente}\n")
-        p.text(f"Apellido 1: {Apell1_cliente}\n")
-        p.text(f"Apellido 2: {Apell2_cliente}\n")
-        p.text(f"Fecha de pago: {fecha_pago}\n")
-        p.text(f"Monto pagado: ${monto}\n")
-        p.text(f"Tipo de pago: {tipo_pago}\n")
-        p.text(f"Cobro: {usuario}\n\n")
-        p.text(f"Fecha de vigencia: {vigencia}\n")
+        printer.image(logo_1)
+        printer.text(f"Numero de tarjeta: {numero_tarjeta}\n")
+        printer.text(f"Nombre: {Nom_cliente}\n")
+        printer.text(f"Apellido 1: {Apell1_cliente}\n")
+        printer.text(f"Apellido 2: {Apell2_cliente}\n")
+        printer.text(f"Fecha de pago: {fecha_pago}\n")
+        printer.text(f"Monto pagado: ${monto}\n")
+        printer.text(f"Tipo de pago: {tipo_pago}\n")
+        printer.text(f"Cobro: {usuario}\n\n")
+        printer.text(f"Fecha de vigencia: {vigencia}\n")
 
-        p.text("----------------------------------\n")
+        printer.text("----------------------------------\n")
 
         # Corta el papel para finalizar la impresion
-        p.cut()
+        printer.cut()
+        printer.close()
 
     def cambiar_valor(self, contrario):
         """Cambia el valor de la variable según las variables de tipo de pago seleccionadas.
@@ -2092,7 +2252,7 @@ class FormularioOperacion:
                 fecha = datetime.strptime(fecha, '%Y-%m-%d 23:59:59')
 
             if cortesia == "Si":
-                nueva_vigencia = fecha + relativedelta(years=1)
+                nueva_vigencia = fecha + relativedelta(years=5)
 
             else:
                 # Obtener la fecha del primer día del siguiente mes
@@ -2166,24 +2326,27 @@ class FormularioOperacion:
 
 
 
+
     def desactivar(self):
         """Desactiva los botones de la interface"""
-        self.ventana1.withdraw()  # oculta la ventana
+        self.root.withdraw()  # oculta la ventana
 
     def activar(self):
         """ Activa los botones de la interface  """
-        self.ventana1.deiconify()
+        self.root.deiconify()
 
 
 
     def desactivar_botones(self):
         """Esta funcion deshabilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
+        self.desactivar()
         self.boton_agregar_pensionado.configure(state='disabled')
         self.boton_modificar_pensionado.configure(state='disabled')
 
 
     def activar_botones(self):
         """Esta funcion habilita los botones que permiten agregar y modificar pensionados en la interfaz gráfica."""
+        self.activar()
         self.boton_agregar_pensionado.configure(state='normal')
         self.boton_modificar_pensionado.configure(state='normal')
 
@@ -2210,9 +2373,9 @@ class FormularioOperacion:
         self.TarifaPreferente.set("")
         self.IImporte.config(text="")
         self.folio_auxiliar = None
+        self.motive_cancel.set("")
         self.entryfolio.focus()
         self.BoletoDentro()
-        self.BoletoDentro2()
 
 
     def vaciar_tabla(self):
@@ -2282,7 +2445,7 @@ class FormularioOperacion:
 
         self.variable_contraseña_pensionados.set("")
         self.variable_numero_tarjeta.set("")
-        View_agregar_pensionados()
+        View_agregar_pensionados(nombre_estacionamiento)
 
         self.limpiar_datos_pago()
         self.ver_pensionados()
@@ -2332,7 +2495,7 @@ class FormularioOperacion:
 
         self.variable_contraseña_pensionados.set("")
         self.variable_numero_tarjeta.set("")
-        View_modificar_pensionados(datos_pensionado = resultado)
+        View_modificar_pensionados(datos_pensionado = resultado, nombre_estacionamiento=nombre_estacionamiento)
         self.limpiar_datos_pago()
         self.ver_pensionados()
         self.activar_botones()
@@ -2494,17 +2657,17 @@ class FormularioOperacion:
         btn_aceptar.pack(side=tk.BOTTOM, pady=10)
 
         # Obtener las dimensiones de la ventana principal
-        self.ventana1.update_idletasks()
-        ancho_ventana_principal = self.ventana1.winfo_width()
-        alto_ventana_principal = self.ventana1.winfo_height()
+        self.root.update_idletasks()
+        ancho_ventana_principal = self.root.winfo_width()
+        alto_ventana_principal = self.root.winfo_height()
 
         # Obtener las dimensiones de la pantalla
         ancho_pantalla = ventana.winfo_screenwidth()
         alto_pantalla = ventana.winfo_screenheight()
 
         # Calcular la posicion de la ventana secundaria para que quede en el centro de la pantalla
-        x = self.ventana1.winfo_x() + (ancho_ventana_principal - ventana.winfo_width()) // 2
-        y = self.ventana1.winfo_y() + (alto_ventana_principal - ventana.winfo_height()) // 2
+        x = self.root.winfo_x() + (ancho_ventana_principal - ventana.winfo_width()) // 2
+        y = self.root.winfo_y() + (alto_ventana_principal - ventana.winfo_height()) // 2
 
         # Verificar que la ventana secundaria no quede fuera de la pantalla
         x = max(0, min(x, ancho_pantalla - ventana.winfo_width()))
@@ -2527,6 +2690,49 @@ class FormularioOperacion:
         """
         self.importe.set(text_importe)
         self.IImporte.config(text=self.importe.get())
+
+
+    def get_date_limit(self, date_start:datetime, Tolerance:int) -> datetime:
+        """
+        Calcula la fecha límite a partir de una fecha de inicio y una cantidad de días de tolerancia.
+
+        :param date_start (datetime): Fecha de inicio.
+        :param Tolerance (int): Cantidad de días laborables a agregar.
+        :return (datetime): Fecha límite después de agregar la cantidad de días laborables.
+        """
+        date_limit = date_start
+
+        while Tolerance > 0:
+            date_limit  += timedelta(days=1)
+            # Verifica si el día no es fin de semana (lunes a viernes)
+            if date_limit.weekday() < 5:
+                Tolerance -= 1
+        
+        return date_limit
+
+    def on_tab_changed(self, event):
+        # Obtener el índice de la pestaña actual
+        current_tab_index = self.cuaderno1.index(self.cuaderno1.select())
+
+        # Comprobar si la pestaña actual es la que se desea
+        if current_tab_index == 0:
+            # Hacer focus en el widget deseado
+            self.entry_placa.focus_set()
+        
+        # Comprobar si la pestaña actual es la que se desea
+        elif current_tab_index == 1:
+            # Hacer focus en el widget deseado
+            self.entryfolio.focus_set()
+
+        # Comprobar si la pestaña actual es la que se desea
+        elif current_tab_index == 2:
+            self.Calcular_Corte()
+            self.Puertoycontar()
+
+        # Comprobar si la pestaña actual es la que se desea
+        elif current_tab_index == 3:
+            # Hacer focus en el widget deseado
+            self.caja_texto_numero_tarjeta.focus_set()
 
 # aplicacion1=FormularioOperacion()
 

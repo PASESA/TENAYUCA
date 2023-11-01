@@ -13,31 +13,31 @@ from operacion import Operacion
 
 
 class ToolsEmail:
-    """Clase que proporciona herramientas relacionadas con el correo electrónico y archivos."""
+    """Clase que proporciona herramientas relacionadas con el correo electronico y archivos."""
 
     def __init__(self):
         """Constructor de la clase"""
         self.DB = Operacion()
 
     def check_internet_connection(self, url: str = "http://www.google.com", timeout: int = 10) -> bool:
-        """Comprueba si hay una conexión activa a Internet mediante una petición HTTP a la URL dada.
+        """Comprueba si hay una conexion activa a Internet mediante una peticion HTTP a la URL dada.
 
         Args:
-            url (str, optional): La URL a la que se realizará la petición. Por defecto es "http://www.google.com".
+            url (str, optional): La URL a la que se realizará la peticion. Por defecto es "http://www.google.com".
             timeout (int, optional): El tiempo máximo en segundos para esperar la respuesta. Por defecto es 5.
 
         Returns:
-            bool: True si hay una conexión activa a Internet, False si no se puede establecer la conexión.
+            bool: True si hay una conexion activa a Internet, False si no se puede establecer la conexion.
         """
         try:
             response = get(url, timeout=timeout)
-            # Lanza una excepción si la respuesta HTTP no es exitosa
+            # Lanza una excepcion si la respuesta HTTP no es exitosa
             response.raise_for_status()
-            print("Conexión a Internet activa.")
+            print("Conexion a Internet activa.")
             return True
 
         except RequestException:
-            print("No se pudo establecer conexión a Internet.")
+            print("No se pudo establecer conexion a Internet.")
             return False
 
     def compress_file_to_zip(self, source_file: str, output_filename: str = None) -> str or None:
@@ -45,14 +45,14 @@ class ToolsEmail:
 
         Args:
             source_file (str): Ruta al archivo que se comprimirá.
-            output_filename (str): Nombre del archivo ZIP de salida. Si no se proporciona, se usará el nombre del archivo fuente con extensión ".zip".
+            output_filename (str): Nombre del archivo ZIP de salida. Si no se proporciona, se usará el nombre del archivo fuente con extension ".zip".
 
         Returns:
-            str or None: Ruta absoluta del archivo ZIP si la compresión es exitosa, None si hay algún error.
+            str or None: Ruta absoluta del archivo ZIP si la compresion es exitosa, None si hay algún error.
         """
         try:
             if output_filename is None:
-                # Si no se proporciona un nombre de archivo de salida, usamos el nombre del archivo fuente con extensión ".zip"
+                # Si no se proporciona un nombre de archivo de salida, usamos el nombre del archivo fuente con extension ".zip"
                 output_filename = source_file + '.zip'
 
             with ZipFile(output_filename, 'w', ZIP_DEFLATED) as zipf:
@@ -88,7 +88,7 @@ class ToolsEmail:
         """
         Elimina un archivo del sistema.
 
-        Esta función toma la ruta de un archivo como entrada y trata de eliminarlo del sistema de archivos.
+        Esta funcion toma la ruta de un archivo como entrada y trata de eliminarlo del sistema de archivos.
 
         Args:
             path_file (str): La ruta del archivo que se va a eliminar.
@@ -113,7 +113,7 @@ class ToolsEmail:
             str or None: La ruta del archivo de respaldo si se crea exitosamente, None si ocurre un error.
         """
         try:
-            # Configuración de la base de datos
+            # Configuracion de la base de datos
             host = self.DB.host
             user = self.DB.user
             password = self.DB.password
@@ -130,7 +130,7 @@ class ToolsEmail:
                 backup_path = path.abspath(backup_path)
                 return backup_path
             else:
-                print("El archivo de respaldo no se creó correctamente.")
+                print("El archivo de respaldo no se creo correctamente.")
                 self.remove_file(backup_path)
                 return None
 
@@ -140,14 +140,14 @@ class ToolsEmail:
             return None
 
 class SendEmail:
-    """Clase que permite enviar correos electrónicos con archivos adjuntos."""
+    """Clase que permite enviar correos electronicos con archivos adjuntos."""
 
     def __init__(self, username: str, password: str, estacionamiento: str, smtp_server: str = "smtp.pasesa.com.mx", smtp_port: int = 1025) -> None:
-        """Inicializa una instancia de la clase SendEmail para enviar correos electrónicos con archivos adjuntos.
+        """Inicializa una instancia de la clase SendEmail para enviar correos electronicos con archivos adjuntos.
 
         Args:
-            username (str): El nombre de usuario para la cuenta de correo electrónico.
-            password (str): La contraseña para la cuenta de correo electrónico.
+            username (str): El nombre de usuario para la cuenta de correo electronico.
+            password (str): La contraseña para la cuenta de correo electronico.
             estacionamiento (str): Nombre del estacionamiento, utilizado en el nombre del archivo adjunto.
             smtp_server (str, opcional): El servidor SMTP para el envío de correos. Por defecto es "smtp.pasesa.com.mx".
             smtp_port (int, opcional): El puerto del servidor SMTP. Por defecto es 1025.
@@ -161,12 +161,12 @@ class SendEmail:
         self.tools = ToolsEmail()
 
     def send_mail(self, to_email: str, subject: str, message: str, file: str) -> bool:
-        """Envía un correo electrónico con un archivo adjunto.
+        """Envía un correo electronico con un archivo adjunto.
 
         Args:
-            to_email (str): La dirección de correo electrónico del destinatario.
-            subject (str): El asunto del correo electrónico.
-            message (str): El contenido del correo electrónico.
+            to_email (str): La direccion de correo electronico del destinatario.
+            subject (str): El asunto del correo electronico.
+            message (str): El contenido del correo electronico.
             file (str): Ruta al archivo que se adjuntará al correo.
 
         Returns:
@@ -174,7 +174,7 @@ class SendEmail:
         """
         from_email = self.username
 
-        # Verificar la conexión a Internet antes de intentar enviar el correo
+        # Verificar la conexion a Internet antes de intentar enviar el correo
         if not self.tools.check_internet_connection():
             return False
         else:
@@ -201,13 +201,13 @@ class SendEmail:
 
                 # Conectar al servidor SMTP y enviar el correo
                 with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                    # Iniciar la conexión segura TLS
+                    # Iniciar la conexion segura TLS
                     server.starttls()
-                    # Inicio de sesión
+                    # Inicio de sesion
                     server.login(self.username, self.password)
                     # Enviar correo
                     server.sendmail(from_email, to_email, msg.as_string())
-                    # Terminar la sesión
+                    # Terminar la sesion
                     server.quit()
 
                 print('Correo enviado exitosamente.')
@@ -220,7 +220,7 @@ class SendEmail:
 
 def call_process() -> str:
     """
-    Envía la base de datos por correo electrónico.
+    Envía la base de datos por correo electronico.
 
     Returns:
         str: Mensaje informativo sobre el resultado del envío del correo.
@@ -233,7 +233,7 @@ def call_process() -> str:
     password = '@Tenayuca200'
     EMAIL = "enviocorreospasesa@outlook.com"
 
-    # Inicializar herramientas de correo electrónico y envío
+    # Inicializar herramientas de correo electronico y envío
     tools = ToolsEmail()
     email = SendEmail(
         username=username, 
@@ -256,15 +256,15 @@ def call_process() -> str:
     if email.send_mail(to_email=EMAIL, subject=subject, message=message, file=db_file):
         return "Base de datos enviada exitosamente.\n"
     else:
-        return "Error: No se pudo enviar la base de datos por correo electrónico.\n"
+        return "Error: No se pudo enviar la base de datos por correo electronico.\n"
 
 
 def main() -> None:
     """
-    Función principal del programa para enviar la base de datos por correo electrónico y mostrar el resultado.
+    Funcion principal del programa para enviar la base de datos por correo electronico y mostrar el resultado.
     """
     try: 
-        # Ejecutar la función para enviar el correo electrónico
+        # Ejecutar la funcion para enviar el correo electronico
         message_info = call_process()
 
         # Instanciar el objeto Usb para imprimir el resultado
@@ -291,6 +291,6 @@ if __name__ == "__main__":
     """
     Punto de entrada principal del programa.
     """
-    # Ejecutar la función principal
+    # Ejecutar la funcion principal
     main()
 

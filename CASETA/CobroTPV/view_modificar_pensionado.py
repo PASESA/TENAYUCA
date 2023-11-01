@@ -1,26 +1,29 @@
+from tkinter import filedialog
+import qrcode
+
 from tkinter import messagebox as mb
 import tkinter as tk
 from tkinter import ttk
-from tkinter import StringVar, IntVar
+from tkinter import StringVar
 
 from datetime import datetime
 
 from queries import Pensionados
 import traceback
+from escpos.printer import Usb, USBNotFoundError
 
-
-from dateutil.relativedelta import relativedelta
 
 class View_modificar_pensionados():
     """Clase para mostrar la ventana de modificación de datos de un pensionado."""
 
-    def __init__(self, datos_pensionado):
+    def __init__(self, datos_pensionado, nombre_estacionamiento):
         """
         Constructor de la clase. Inicializa la ventana y los atributos.
 
         Args:
             datos_pensionado (tuple): Tupla con los datos del pensionado a modificar.
         """
+        self.nombre_estacionamiento = nombre_estacionamiento
         self.query = Pensionados()
         self.datos_pensionado = datos_pensionado
 
@@ -30,7 +33,7 @@ class View_modificar_pensionados():
         # Se elimina la funcionalidad del botón de cerrar
         self.panel_crud.protocol("WM_DELETE_WINDOW", lambda: self.desconectar())
 
-        self.panel_crud.title(f'Modificar pensionado')
+        self.panel_crud.title(f'Modificar pensionado . {self.nombre_estacionamiento}')
 
         # Configura la columna principal del panel para que use todo el espacio disponible
         self.panel_crud.columnconfigure(0, weight=1)
@@ -322,5 +325,3 @@ class View_modificar_pensionados():
         self.panel_crud.quit()
         self.panel_crud.destroy()
 
-
-#View_modificar_pensionados()
