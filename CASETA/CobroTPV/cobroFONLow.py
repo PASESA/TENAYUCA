@@ -783,6 +783,8 @@ class FormularioOperacion:
             printer.text('TIPO DE COBRO: ' + TarifaPreferente + '\n')
 
             if QR_salida:
+                QR = f"{Entrada}{Folio}"
+                self.DB.generar_QR(QR)
                 # Imprimir el codigo QR de salida si está habilitado
                 printer.set(align="center")
                 printer.image(qr_imagen)
