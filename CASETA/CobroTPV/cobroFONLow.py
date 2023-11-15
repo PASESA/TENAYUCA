@@ -355,7 +355,7 @@ class FormularioOperacion:
         self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nCON FOLIO", background=button_color, fg=button_letters_color, command=self.BoletoPerdido_conFolio, width=10, height=3, anchor="center", font=("Arial", 10))
         self.boton3.grid(column=1, row=1, sticky=tk.NE, padx=10, pady=5)
 
-        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nSIN FOLIO", background=button_color, fg=button_letters_color, command=self.BoletoPerdido_sinFolio, width=10, height=3, anchor="center", font=("Arial", 10), state = "disabled")
+        self.boton3=tk.Button(self.label_botones_boletos_perdido, text="Boleto Perdido\nSIN FOLIO", background=button_color, fg=button_letters_color, command=self.BoletoPerdido_sinFolio, width=10, height=3, anchor="center", font=("Arial", 10))
         self.boton3.grid(column=2, row=1, sticky=tk.NE, padx=10, pady=5)
 
 
@@ -488,7 +488,7 @@ class FormularioOperacion:
         if Boleto_perdido == False:
             return
 
-        MaxFolio=str(self.DB.MaxfolioEntrada())
+        MaxFolio=self.DB.MaxfolioEntrada()
         MaxFolio = MaxFolio[0][0]
         folio_boleto = MaxFolio + 1
         self.MaxId.set(folio_boleto)
