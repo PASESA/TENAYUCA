@@ -665,19 +665,12 @@ class FormularioOperacion:
 
         importe = 0
 
-
         if self.dias_dentro == 0 and self.horas_dentro == 0:
-            # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 25 unidades
-            importe = 25
+            # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 20 unidades
+            importe = 20
         else:
-            if minutos <= 1: 
-                importe = (self.horas_dentro * 25) + (minutos * 7)
-
-            else: 
-                importe = (self.horas_dentro * 25) + (minutos * 6) + 1 
-
-
-        importe = importe + (self.dias_dentro * 600)
+            # Si la permanencia es mayor a 1 hora, se calcula el importe según una formula específica
+            importe = ((self.dias_dentro) * 250 + (self.horas_dentro * 20) + (minutos) * 5)
 
         # Establecer el importe y mostrarlo
         self.mostrar_importe(importe)
@@ -893,12 +886,12 @@ class FormularioOperacion:
 
             if self.horas_dentro <= 8:
                 if self.horas_dentro == 8 and self.minutos_dentro > 0:
-                    importe= importe - 120
+                    importe= importe - 80
                 else: 
                     importe = 80
 
             else:# self.horas_dentro > 8:
-                importe= importe - 120
+                importe= importe - 80
 
             text_promo = "EVENTO"
 
