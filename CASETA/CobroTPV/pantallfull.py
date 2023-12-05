@@ -5,7 +5,7 @@ import tkinter as tk
 import operacion
 #import subprocess
 
-class Fullscreen_Example:
+class Login_sistema:
     def __init__(self):
         self.operacion1=operacion.Operacion()    
         self.window = tk.Tk()
@@ -23,8 +23,7 @@ class Fullscreen_Example:
         self.entryNombre.grid(column=1, row=0, padx=4, pady=4)
         self.entryNombre.focus()
         self.Contraseña=tk.StringVar()
-        self.entryContraseña=tk.Entry(self.labelframe1, width=10, textvariable=self.Contraseña, show=
-        "*", justify=tk.RIGHT)
+        self.entryContraseña=tk.Entry(self.labelframe1, width=10, textvariable=self.Contraseña, show="*", justify=tk.RIGHT)
         self.entryContraseña.grid(column=1, row=1, padx=4, pady=4)
         self.Turno=tk.StringVar()
         self.entryTurno=tk.Entry(self.labelframe1, width=10, textvariable=self.Turno)#, state="readonly")
@@ -48,51 +47,61 @@ class Fullscreen_Example:
         self.boton2=tk.Button(self.labelframe1, text="Entrar", command=self.abrirPrograma, width=10, height=1, anchor="center", background="green")
         self.boton2.grid(column=0, row=3, padx=4, pady=4)                                                                                                                                
         self.window.mainloop()
-        
+
     def abrirPrograma(self):
-        usuario = str(self.Nombre.get(), )   
-        contrasena = str(self.Contraseña.get(), )
-        turno = str(self.Turno.get(), )
-        inicio = datetime.today()
+        usuario = self.Nombre.get()
+        contrasena = self.Contraseña.get()
+        turno = self.Turno.get()
+
         ##Validar que los campós no esten vacios
         ##Obtener datos del usuario, validamos usuario y contrasena
-        if ((len(contrasena) == 0) or (len(usuario) == 0)):
-            mb.showwarning("IMPORTANTE", "Capturar: La CLAVE para ejecutar las acciones")
-        elif (len(turno) == 0):
-            mb.showwarning("IMPORTANTE", "Capturar: TURNO PARA CONTINUAR")
-        else:
-            datos = (usuario)
-            respuesta = self.operacion1.ConsultaUsuario(datos) 
-            print("respuesta: ",respuesta)
-            
-            if respuesta:
-                for fila in respuesta :
-                    idusuario = str(fila[0])
-                    Clave = str(fila[1])
-                    nombre = str(fila[2])     
-                if contrasena == Clave:    
-                    actual =(idusuario, usuario, inicio, nombre, turno) 
-                    self.operacion1.ActuaizaUsuario(actual)
-                    ##Cerrar la ventana
-                    self.quitF()
-                    from cobroFONLow import FormularioOperacion       
-                    FormularioOperacion()
+        if not usuario:
+            mb.showwarning("IMPORTANTE", "Escriba su usuario")
+            self.entryNombre.focus()
+            return
+
+        if not contrasena:
+            mb.showwarning("IMPORTANTE", "Escriba su contraseña")
+            self.entryContraseña.focus()
+            return
+
+        if not turno:
+            mb.showwarning("IMPORTANTE", "Escriba su turno")
+            self.entryTurno.focus()
+            return
+
+        informacion_usuario = self.operacion1.ConsultaUsuario(usuario) 
+
+        if not informacion_usuario:
+            mb.showwarning("IMPORTANTE", "El usuario ingresado no existe, revise su informacion")
+            self.Nombre.set("")
+            self.Contraseña.set("")
+            self.Turno.set("")               
+            self.entryNombre.focus() 
+            return
+
+        print("respuesta: ",informacion_usuario)
+        for informacion in informacion_usuario:
+            id_usuario = str(informacion[0])
+            password_usuario = str(informacion[1])
+            nombre = str(informacion[2])
+
+        if contrasena != password_usuario:
+            mb.showwarning("IMPORTANTE", "La Contraseña no coincide, volver a capturarla")
+            ##limpiar el text de contraseña y poner el foco en ella.
+            self.Contraseña.set("")               
+            self.entryContraseña.focus()
+            return
+
+        inicio = datetime.today()
+        info_usuario =(id_usuario, usuario, inicio, nombre, turno) 
+        self.operacion1.ActuaizaUsuario(info_usuario)
+        ##Cerrar la ventana
+        self.quitF()
+        from cobroFONLow import FormularioOperacion       
+        FormularioOperacion()
 
 
-                else:
-                    mb.showwarning("IMPORTANTE", "La Contraseña no coincide, volver a capturarla")
-                    self.Contraseña.set("")               
-                    self.entryContraseña.focus()
-                    ##limpiar el text de contraseña y poner el foco en ella.
-                    ##Asteriscos en la contraseña  
-            else:
-                mb.showwarning("IMPORTANTE", "El usuario no existe")
-                self.Nombre.set("")
-                self.Contraseña.set("")
-                self.Turno.set("")               
-                self.entryNombre.focus() 
-              
-       # result=subprocess.getoutput('/home/pi/Documents/cobroid.py')    
     def toggleFullScreen(self, event):
         self.fullScreenState = not self.fullScreenState
         self.window.attributes("-fullscreen", self.fullScreenState)
@@ -101,9 +110,10 @@ class Fullscreen_Example:
     def quitFullScreen(self, event):
         self.fullScreenState = False
         self.window.attributes("-fullscreen", self.fullScreenState)
+
     def quitF(self):
         self.window.destroy()
         print('salir')
 
 if __name__ == '__main__':
-    app = Fullscreen_Example()
+    app = Login_sistema()

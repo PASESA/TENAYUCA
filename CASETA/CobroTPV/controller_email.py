@@ -6,10 +6,24 @@ from email.mime.application import MIMEApplication
 from escpos.printer import Usb
 from zipfile import ZipFile, ZIP_DEFLATED
 from subprocess import run, CalledProcessError
-from os import path, getcwd, remove
+from os import path, getcwd, remove, listdir
 from requests import get
 from requests.exceptions import RequestException
 from operacion import Operacion
+
+dir_cortes = "../Cortes"
+
+# Nombre del estacionamiento
+nombre_estacionamiento = 'Tenayuca 200'
+
+# Datos de acceso a la cuenta de correo
+username = 'tenayuca200@pasesa.com.mx'
+password = '@Tenayuca200'
+
+# Correos para enviar la informacion
+EMAIL_send_database = "enviocorreospasesa@outlook.com"
+EMAIL_send_corte = "ingresos@pasesa.com.mx"
+EMAIL_notification = "ingresos@pasesa.com.mx"
 
 
 class ToolsEmail:
@@ -40,27 +54,48 @@ class ToolsEmail:
             print("No se pudo establecer conexion a Internet.")
             return False
 
-    def compress_file_to_zip(self, source_file: str, output_filename: str = None) -> str or None:
-        """Comprime un archivo en un archivo ZIP.
+    def compress_to_zip(self, source: str, output_filename: str = None, is_dir: bool = False, rename:bool = True) -> str or None:
+        """Comprime un archivo o directorio en un archivo ZIP.
 
         Args:
-            source_file (str): Ruta al archivo que se comprimirá.
-            output_filename (str): Nombre del archivo ZIP de salida. Si no se proporciona, se usará el nombre del archivo fuente con extension ".zip".
+            source (str): Ruta al archivo o directorio que se comprimirá.
+            output_filename (str): Nombre del archivo ZIP de salida. Si no se proporciona, se usará el nombre del archivo fuente con extensión ".zip".
 
         Returns:
-            str or None: Ruta absoluta del archivo ZIP si la compresion es exitosa, None si hay algún error.
+            str or None: Ruta absoluta del archivo ZIP si la compresión es exitosa, None si hay algún error.
         """
         try:
-            if output_filename is None:
-                # Si no se proporciona un nombre de archivo de salida, usamos el nombre del archivo fuente con extension ".zip"
-                output_filename = source_file + '.zip'
+            # Si no se proporciona un nombre de archivo de salida, usamos el nombre del archivo fuente con extensión ".zip"
+            output_filename = output_filename or f"{source}.zip"
+
+            if is_dir:
+                position_number = len(f"{nombre_estacionamiento}_Corte_N°_")
+                files = listdir(source)
+                for id, file in enumerate(files):
+                    _, ext = path.splitext(file)
+                    if ext.lower() != ".txt":
+                        files.remove(file)
+
+                if rename:
+                    first_number = files[0][position_number:-4]
+                    last_number = files[len(files)-1][position_number:-4]
+
+                    numbers = f"Cortes {first_number} a {last_number}" if first_number != last_number else f"Corte {first_number}"
+                    output_filename = f"{source[:-6]+numbers}.zip".replace(" ", "_")
 
             with ZipFile(output_filename, 'w', ZIP_DEFLATED) as zipf:
-                arcname = path.basename(source_file)
-                zipf.write(source_file, arcname)
-                absolute_path_zip = path.abspath(output_filename)
-                print("Archivo comprimido correctamente")
-                return absolute_path_zip
+                if is_dir:
+                    for file in files:
+                        file_path = path.join(source, file)
+                        # Agregar archivos del directorio al ZIP con su ruta relativa
+                        zipf.write(file_path, arcname=path.relpath(file_path, source))
+                else:
+                    # Agregar archivo al ZIP con su nombre base
+                    arcname = path.basename(source)
+                    zipf.write(source, arcname)
+
+            print("Archivo comprimido correctamente")
+            return path.abspath(output_filename)
 
         except Exception as e:
             print(f'Error al comprimir el archivo: {e}')
@@ -142,33 +177,30 @@ class ToolsEmail:
 class SendEmail:
     """Clase que permite enviar correos electronicos con archivos adjuntos."""
 
-    def __init__(self, username: str, password: str, estacionamiento: str, smtp_server: str = "smtp.pasesa.com.mx", smtp_port: int = 1025) -> None:
+    def __init__(self, username: str, password: str, smtp_server: str = "smtp.pasesa.com.mx", smtp_port: int = 1025) -> None:
         """Inicializa una instancia de la clase SendEmail para enviar correos electronicos con archivos adjuntos.
 
         Args:
             username (str): El nombre de usuario para la cuenta de correo electronico.
             password (str): La contraseña para la cuenta de correo electronico.
-            estacionamiento (str): Nombre del estacionamiento, utilizado en el nombre del archivo adjunto.
             smtp_server (str, opcional): El servidor SMTP para el envío de correos. Por defecto es "smtp.pasesa.com.mx".
             smtp_port (int, opcional): El puerto del servidor SMTP. Por defecto es 1025.
         """
         self.username = username
         self.password = password
-        self.estacionamiento = estacionamiento
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
 
         self.tools = ToolsEmail()
 
-    def send_mail(self, to_email: str, subject: str, message: str, file: str) -> bool:
+    def send_mail(self, to_email: str, subject: str, message: str, zip_file: str) -> bool:
         """Envía un correo electronico con un archivo adjunto.
 
         Args:
             to_email (str): La direccion de correo electronico del destinatario.
             subject (str): El asunto del correo electronico.
             message (str): El contenido del correo electronico.
-            file (str): Ruta al archivo que se adjuntará al correo.
-
+            zip_file (str): Ruta al archivo que se adjuntará al correo.
         Returns:
             bool: True si el correo se envía exitosamente, False si hay algún error.
         """
@@ -177,86 +209,146 @@ class SendEmail:
         # Verificar la conexion a Internet antes de intentar enviar el correo
         if not self.tools.check_internet_connection():
             return False
-        else:
-            try:
-                # Crea la estructura del correo
-                msg = MIMEMultipart()
-                msg['From'] = from_email
-                msg['To'] = to_email
-                msg['Subject'] = subject
 
-                msg.attach(MIMEText(message, 'plain'))
+        try:
+            # Crea la estructura del correo
+            msg = MIMEMultipart()
+            msg['From'] = from_email
+            msg['To'] = to_email
+            msg['Subject'] = subject
 
-                zip_file = self.tools.compress_file_to_zip(file)
-                self.tools.remove_file(file)
+            msg.attach(MIMEText(message, 'plain'))
 
-                if zip_file is None:
-                    return False
+            # Adjuntar el archivo al correo
+            with open(zip_file, 'rb') as f:
+                attached_file = MIMEApplication(f.read(), _subtype="zip")
+                filename = path.basename(zip_file)
+                print(filename)
+                attached_file.add_header('content-disposition', 'attachment', filename=filename)
+                msg.attach(attached_file)
 
-                # Adjuntar el archivo al correo
-                with open(zip_file, 'rb') as f:
-                    attached_file = MIMEApplication(f.read(), _subtype="zip")
-                    attached_file.add_header('content-disposition', 'attachment', filename=f'{self.estacionamiento}_DB.zip')
-                    msg.attach(attached_file)
+            # Conectar al servidor SMTP y enviar el correo
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                # Iniciar la conexion segura TLS
+                server.starttls()
+                # Inicio de sesion
+                server.login(self.username, self.password)
+                # Enviar correo
+                server.sendmail(from_email, to_email, msg.as_string())
+                # Terminar la sesion
+                server.quit()
 
-                # Conectar al servidor SMTP y enviar el correo
-                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                    # Iniciar la conexion segura TLS
-                    server.starttls()
-                    # Inicio de sesion
-                    server.login(self.username, self.password)
-                    # Enviar correo
-                    server.sendmail(from_email, to_email, msg.as_string())
-                    # Terminar la sesion
-                    server.quit()
+            print('Correo enviado exitosamente')
+            return True
 
-                print('Correo enviado exitosamente.')
-                self.tools.remove_file(zip_file)
-                return True
+        except Exception as e:
+            print(e)
+            return False
 
-            except Exception as e:
-                print(e)
-                return False
+# Inicializar herramientas de correo electronico y envío
+tools = ToolsEmail()
 
-def call_process() -> str:
+def send_database() -> str:
+    """
+    Envía el corte por correo electronico.
+
+    Returns:
+        str: Mensaje informativo sobre el resultado del envío del correo.
+    """
+
+    email_database = SendEmail(
+        username=username, 
+        password=password)
+
+    # Generar ruta y obtener el archivo de respaldo de la base de datos
+    path_db = getcwd() + f'/db_{nombre_estacionamiento.replace(" ", "_")}.sql'
+    db_file = tools.get_DB(path_db)
+
+    if db_file is None:
+        return "Error: No se pudo generar el respaldo de la base de datos\n"
+
+    zip_file = tools.compress_to_zip(db_file)
+    tools.remove_file(db_file)
+
+    # Crear el asunto y mensaje del correo
+    hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    subject = f"[{nombre_estacionamiento}][{hora}] Envio de Base de datos"
+    message = f"Base de datos del estacionamiento: {nombre_estacionamiento}."
+
+    # Enviar el correo y manejar el resultado
+    if email_database.send_mail(to_email=EMAIL_send_database, subject=subject, message=message, zip_file=zip_file):
+        tools.remove_file(zip_file)
+        return "Base de datos enviada exitosamente\n"
+
+    tools.remove_file(zip_file)
+    return "Error: No se pudo enviar la base de datos\n"
+
+def send_corte() -> str:
     """
     Envía la base de datos por correo electronico.
 
     Returns:
         str: Mensaje informativo sobre el resultado del envío del correo.
     """
-    # Nombre del estacionamiento
-    nombre_estacionamiento = 'Tenayuca'
+    dir_path = path.abspath(dir_cortes)
+    files = listdir(dir_path)
+    if len(files) == 0: return "No hay cortes para enviar\n"
 
-    # Datos de acceso a la cuenta de correo
-    username = 'tenayuca200@pasesa.com.mx'
-    password = '@Tenayuca200'
-    EMAIL = "enviocorreospasesa@outlook.com"
 
     # Inicializar herramientas de correo electronico y envío
-    tools = ToolsEmail()
-    email = SendEmail(
+    email_corte = SendEmail(
         username=username, 
-        password=password, 
-        estacionamiento=nombre_estacionamiento)
+        password=password)
 
-    # Generar ruta y obtener el archivo de respaldo de la base de datos
-    path_db = getcwd() + f'/db_{nombre_estacionamiento}.sql'
-    db_file = tools.get_DB(path_db)
-
-    if db_file is None:
-        return "Error: No se pudo generar el respaldo de la base de datos\n"
+    zip_file = tools.compress_to_zip(source=dir_path, is_dir=True)
 
     # Crear el asunto y mensaje del correo
     hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    subject = f"[{nombre_estacionamiento}][{hora}] Envio de Base de datos"
-    message = f"Base de datos del estacionamiento {nombre_estacionamiento}."
+    subject = f"[{nombre_estacionamiento}]-[{hora}] Envio de {path.basename(zip_file).replace('_', ' ')[:-4]}"
+    message = f"Corte del estacionamiento: {nombre_estacionamiento}."
 
     # Enviar el correo y manejar el resultado
-    if email.send_mail(to_email=EMAIL, subject=subject, message=message, file=db_file):
-        return "Base de datos enviada exitosamente.\n"
-    else:
-        return "Error: No se pudo enviar la base de datos por correo electronico.\n"
+    if email_corte.send_mail(to_email=EMAIL_send_corte, subject=subject, message=message, zip_file=zip_file):
+        tools.remove_file(zip_file)
+
+        for id, file in enumerate(files):
+            file_path = path.join(dir_path, file)
+            _, ext = path.splitext(file)
+            if ext.lower() == ".txt":
+                tools.remove_file(file_path)
+
+        return "Corte enviado exitosamente\n"
+
+    tools.remove_file(zip_file)
+    return "Error: No se pudo enviar el corte\n"
+
+def send_other_corte():
+    """
+    Envía la base de datos por correo electronico.
+
+    Returns:
+        str: Mensaje informativo sobre el resultado del envío del correo.
+    """
+    dir_path = path.abspath("../Reimpresion_Cortes/")
+    files = listdir(dir_path)
+    if len(files) == 0: return
+
+    # Inicializar herramientas de correo electronico y envío
+    email_corte = SendEmail(
+        username=username, 
+        password=password)
+
+    zip_file = tools.compress_to_zip(source=dir_path, is_dir=True, rename=False)
+
+    # Crear el asunto y mensaje del correo
+    hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    subject = f"[{nombre_estacionamiento}]-[{hora}] Notificacion de reimpresion de corte"
+    message = f"Notificacion de reimpresion de corte del estacionamiento: {nombre_estacionamiento}."
+
+    # Enviar el correo y manejar el resultado
+    email_corte.send_mail(to_email=EMAIL_notification, subject=subject, message=message, zip_file=zip_file)
+
+    tools.remove_file(zip_file)
 
 
 def main() -> None:
@@ -264,8 +356,9 @@ def main() -> None:
     Funcion principal del programa para enviar la base de datos por correo electronico y mostrar el resultado.
     """
     try: 
-        # Ejecutar la funcion para enviar el correo electronico
-        message_info = call_process()
+        # Ejecutar la funcion para enviar los correos electronicos
+        message_send_database = send_database()
+        message_send_corte = send_corte()
 
         # Instanciar el objeto Usb para imprimir el resultado
         printer = Usb(0x04b8, 0x0e15, 0)
@@ -275,22 +368,15 @@ def main() -> None:
 
         # Imprimir separadores y mensaje de resultado en la consola
         printer.text("-" * 30 + "\n")
-        printer.text(f"{message_info}\n")
+        printer.text(f"{message_send_database}\n")
+        printer.text(f"{message_send_corte}\n")
         printer.text("-" * 30 + "\n")
         printer.cut()
         printer.close()
 
         # Imprimir el mensaje en la consola
-        print(message_info)
+        print(message_send_database)
+        print(message_send_corte)
     except Exception as e:
         print(e)
-
-
-
-if __name__ == "__main__":
-    """
-    Punto de entrada principal del programa.
-    """
-    # Ejecutar la funcion principal
-    main()
 

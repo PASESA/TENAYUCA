@@ -117,7 +117,7 @@ class View_modificar_pensionados():
         etiqueta_user = tk.Label(seccion_superior, text=f'Bienvenido/a')
         etiqueta_user.grid(row=0, column=0, padx=5, pady=5)
 
-        seccion_datos_pensionado = ttk.LabelFrame(seccion_superior, text="\t\t\tIngresa los datos del pensionado a registrar")
+        seccion_datos_pensionado = ttk.LabelFrame(seccion_superior, text="\t\t\tIngresa los datos del pensionado a modificar")
         seccion_datos_pensionado.grid(row=1, column=0,padx=5, pady=5, sticky=tk.NW)
 
 

@@ -29,7 +29,6 @@ class View_agregar_pensionados:
 
         # Crea las variables para los datos del pensionado
         self.variable_numero_tarjeta = StringVar()
-
         self.variable_nombre = StringVar()
         self.variable_apellido_1 = StringVar()
         self.variable_apellido_2 = StringVar()
