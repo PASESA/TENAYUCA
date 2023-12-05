@@ -2209,7 +2209,6 @@ class FormularioOperacion:
             self.limpiar_datos_pago()
             return
 
-        numtarjeta = int(numtarjeta)
         resultado = self.DB.ValidarRFID(numtarjeta)
 
         if not resultado:
@@ -2245,6 +2244,7 @@ class FormularioOperacion:
         if Estatus == "Inactiva":
             # Cálculo del pago con penalizacion para estatus Inactiva
             pago = self.calcular_pago_media_pension(monto)
+            nummes = 1
             valor_tarjeta_pension = valor_tarjeta
             if cortesia == "Si":
                 pago = 0
@@ -2316,7 +2316,7 @@ class FormularioOperacion:
         Raises:
             TypeError: Si no se ha seleccionado una forma de pago.
         """
-        numtarjeta = str(self.variable_numero_tarjeta.get())
+        tarjeta = self.variable_numero_tarjeta.get()
         nummes = int(self.meses_pago.get())
 
         try:
@@ -2328,12 +2328,11 @@ class FormularioOperacion:
             if not self.variable_tipo_pago_transferencia.get() and not self.variable_tipo_pago_efectivo.get():
                 raise TypeError("Selecciona una forma de pago")
 
-            if not numtarjeta:
+            if not tarjeta:
                 mb.showwarning("IMPORTANTE", "Debe Leer el Numero de Tarjeta")
                 self.caja_texto_numero_tarjeta.focus()
                 return
 
-            tarjeta = int(numtarjeta)
             Existe = self.DB.ValidarRFID(tarjeta)
 
             if not Existe:
@@ -2361,6 +2360,7 @@ class FormularioOperacion:
             pago = 0
             if Estatus == "Inactiva":
                 pago = self.calcular_pago_media_pension(monto)
+                nummes = 1
                 total = pago + valor_tarjeta
                 pago = total
                 if cortesia == "Si":
