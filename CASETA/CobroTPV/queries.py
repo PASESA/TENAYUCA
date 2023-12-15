@@ -14,10 +14,9 @@ class Usuarios:
         """
         Inicializa la clase Usuarios.
 
-        Esta función inicializa la clase Usuarios y crea una conexión a la base de datos.
+        Esta función inicializa la clase de la base de datos.
         """
-        operacion = Operacion()
-        self.connection = operacion.abrir()
+        self.operacion = Operacion()
 
     def execute_query(self, query: str):
         """
@@ -32,24 +31,29 @@ class Usuarios:
             - result (list): Una lista con los resultados de la consulta.
         """
         try:
-            if self.connection:
-                # Crea un objeto cursor para ejecutar la consulta
-                self.cursor = self.connection.cursor()
+            # Inicia la conexion con la base de datos
+            connection = self.operacion.abrir()
 
-                # Se ejecuta la consulta
-                self.cursor.execute(query)
+            # Crea un objeto cursor para ejecutar la consulta
+            cursor = connection.cursor()
 
-                # Obtiene los resultados de la consulta
-                result = self.cursor.fetchall()
+            # Se ejecuta la consulta
+            cursor.execute(query)
 
-                # Confirma los cambios en la base de datos
-                self.connection.commit()
+            # Obtiene los resultados de la consulta
+            result = cursor.fetchall()
 
-                # Cierra el cursor
-                self.cursor.close()
+            # Confirma los cambios en la base de datos
+            connection.commit()
 
-                # Retorna los resultados de la consulta
-                return result
+            # Cierra el cursor
+            cursor.close()
+
+            # Cierra la conexion cn la base de datos
+            connection.close()
+
+            # Retorna los resultados de la consulta
+            return result
 
         except err.OperationalError as e:
             print(e)
@@ -87,11 +91,10 @@ class Usuarios:
         """
         datos = tuple(datos)
 
-        if self.connection:
-            query = f"INSERT INTO Usuarios (Usuario, Contrasena, Nom_usuario, Fecha_alta, Telefono1, TelefonoEmer, Sucursal) VALUES {datos};"
+        query = f"INSERT INTO Usuarios (Usuario, Contrasena, Nom_usuario, Fecha_alta, Telefono1, TelefonoEmer, Sucursal) VALUES {datos};"
 
-            # Se ejecuta la consulta
-            self.execute_query(query)
+        # Se ejecuta la consulta
+        self.execute_query(query)
 
     def consultar_usuario(self, id):
         """
@@ -101,13 +104,12 @@ class Usuarios:
 
         :return: (list) Una lista con los datos del usuario consultado.
         """
-        if self.connection:
-            query = f"SELECT Usuario, Contrasena, Nom_usuario, Telefono1, TelefonoEmer, Sucursal FROM Usuarios WHERE Id_usuario = {id}"
+        query = f"SELECT Usuario, Contrasena, Nom_usuario, Telefono1, TelefonoEmer, Sucursal FROM Usuarios WHERE Id_usuario = {id}"
 
-            # Se ejecuta la consulta y se obtiene el resultado.
-            resultado = self.execute_query(query)
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
 
-            return resultado
+        return resultado
 
     def ver_usuarios(self):
         """
@@ -115,13 +117,13 @@ class Usuarios:
 
         :return: (list) Una lista con los datos de todos los usuarios.
         """
-        if self.connection:
-            query = f"SELECT Id_usuario, Usuario, Nom_usuario, Fecha_alta, Telefono1, TelefonoEmer, Sucursal FROM Usuarios"
 
-            # Se ejecuta la consulta y se obtiene el resultado.
-            resultado = self.execute_query(query)
+        query = f"SELECT Id_usuario, Usuario, Nom_usuario, Fecha_alta, Telefono1, TelefonoEmer, Sucursal FROM Usuarios"
 
-            return resultado
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
+
+        return resultado
 
     def eliminar_usuario(self, id):
         """
@@ -131,11 +133,11 @@ class Usuarios:
 
         Esta función elimina un usuario de la base de datos con el identificador proporcionado.
         """
-        if self.connection:
-            query = f"DELETE FROM Usuarios WHERE Id_usuario = {id}"
 
-            # Se ejecuta la consulta
-            self.execute_query(query)
+        query = f"DELETE FROM Usuarios WHERE Id_usuario = {id}"
+
+        # Se ejecuta la consulta
+        self.execute_query(query)
 
     def actualizar_usuarios(self, datos, id):
         """
@@ -146,13 +148,12 @@ class Usuarios:
 
         Esta función actualiza los datos de un usuario existente en la base de datos.
         """
-        if self.connection:
-            datos = tuple(datos)
+        datos = tuple(datos)
 
-            query = f"UPDATE Usuarios SET Usuario = '{datos[0]}', Contrasena = '{datos[1]}', Nom_usuario = '{datos[2]}',  Telefono1 = '{datos[3]}', TelefonoEmer = '{datos[4]}', Sucursal = '{datos[5]}' WHERE Id_usuario = '{id}';"
+        query = f"UPDATE Usuarios SET Usuario = '{datos[0]}', Contrasena = '{datos[1]}', Nom_usuario = '{datos[2]}',  Telefono1 = '{datos[3]}', TelefonoEmer = '{datos[4]}', Sucursal = '{datos[5]}' WHERE Id_usuario = '{id}';"
 
-            # Se ejecuta la consulta
-            self.execute_query(query)
+        # Se ejecuta la consulta
+        self.execute_query(query)
 
 class Pensionados(Usuarios):
     """
@@ -170,11 +171,10 @@ class Pensionados(Usuarios):
         """
         datos = tuple(datos)
 
-        if self.connection:
-            query = f"INSERT INTO Pensionados (Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Fecha_alta, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Vigencia) VALUES {datos};"
+        query = f"INSERT INTO Pensionados (Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Fecha_alta, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Vigencia) VALUES {datos};"
 
-            # Se ejecuta la consulta
-            self.execute_query(query)
+        # Se ejecuta la consulta
+        self.execute_query(query)
 
     def consultar_pensionado(self, Num_tarjeta):
         """
@@ -184,13 +184,12 @@ class Pensionados(Usuarios):
 
         :return: (list) Una lista con los datos del pensionado consultado.
         """
-        if self.connection:
-            query = f"SELECT Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Fecha_vigencia, Vigencia FROM Pensionados WHERE Num_tarjeta = '{Num_tarjeta}'"
+        query = f"SELECT Num_tarjeta, Nom_cliente, Apell1_cliente, Apell2_cliente, Telefono1, Telefono2, Ciudad, Colonia, CP, Calle_num, Placas, Modelo_auto, Color_auto, Monto, Cortesia, Tolerancia, Fecha_vigencia, Vigencia FROM Pensionados WHERE Num_tarjeta = '{Num_tarjeta}'"
 
-            # Se ejecuta la consulta y se obtiene el resultado.
-            resultado = self.execute_query(query)
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
 
-            return resultado
+        return resultado
 
     def ver_pensionados(self):
         """
@@ -198,13 +197,12 @@ class Pensionados(Usuarios):
 
         :return: (list) Una lista con los datos de todos los pensionados.
         """
-        if self.connection:
-            query = f"SELECT Num_tarjeta, Cortesia, Nom_cliente, Estatus, Fecha_vigencia, Tolerancia, Id_cliente, Vigencia FROM Pensionados ORDER BY Id_cliente DESC"
+        query = f"SELECT Num_tarjeta, Cortesia, Nom_cliente, Estatus, Fecha_vigencia, Tolerancia, Id_cliente, Vigencia FROM Pensionados ORDER BY Id_cliente DESC"
 
-            # Se ejecuta la consulta y se obtiene el resultado.
-            resultado = self.execute_query(query)
+        # Se ejecuta la consulta y se obtiene el resultado.
+        resultado = self.execute_query(query)
 
-            return resultado
+        return resultado
 
     def eliminar_pensinado(self, id):
         """
